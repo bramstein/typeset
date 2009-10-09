@@ -2,6 +2,8 @@ load('src/core/object.js');
 load('src/core/array.extra.js');
 load('src/core/array.js');
 
+var infinity = 10000;
+
 function Box(width, value) {
 	this.width = width || 0;
 	this.value = value;
@@ -41,10 +43,10 @@ Penalty.prototype.toString = function () {
 	return '(Penalty: ' + this.penalty + ')';
 };
 Penalty.prototype.isForcedBreak = function () {
-	return this.penalty === -10000;
+	return this.penalty === -infinity;
 };
 
-function BreakPoint(position, line, fitnessClass, totalWidth, totalStretch, totalShrink, demerits, previous) {
+function BreakPoint(position, line, fitnessClass, totalWidth, totalStretch, totalShrink, demerits, previous, next) {
 	this.position = position;
 	this.line = line;
 	this.fitnessClass = fitnessClass;
@@ -53,10 +55,11 @@ function BreakPoint(position, line, fitnessClass, totalWidth, totalStretch, tota
 	this.totalShrink = totalShrink;
 	this.demerits = demerits;
 	this.previous = previous;
+	this.next = next;
 }
 
 BreakPoint.prototype.toString = function () {
-	return '(Breakpoint, position=' + this.position + ', line=' + this.line + ', demerits=' + this.demerits + ')';
+	return '(Breakpoint: line=' + this.line /*+ ', demerits=' + this.demerits*/ + ', fitness=' + this.fitnessClass + ', position=' + this.position + ')';
 }
 
 var sumWidth = [],
@@ -64,10 +67,10 @@ var sumWidth = [],
 	sumShrink = [],
 	activeNodes = [];
 
-function isFeasibleBreakPoint(list, index) {
+function isLegalBreakPoint(list, index) {
 	var node = list[index];
 
-	if (node.type === 'penalty' && node.penalty < 10000) {
+	if (node.type === 'penalty' && node.penalty < infinity) {
 		return true;
 	} else if (index > 0 && node.type === 'glue' && list[index - 1].type === 'box') {
 		return true;
@@ -77,7 +80,7 @@ function isFeasibleBreakPoint(list, index) {
 }
 
 function isForcedBreak(node) {
-	return node.type === 'penalty' && node.penalty === -10000;
+	return node.type === 'penalty' && node.penalty === -infinity;
 }
 
 function computeRatio(list, start, end, line, lineLengths) {
@@ -100,7 +103,7 @@ function computeRatio(list, start, end, line, lineLengths) {
 		if (y > 0) {
 			ratio = (availableLength - l) / y;	
 		} else {
-			ratio = 10000;
+			ratio = infinity;
 		}
 	} else if (l > availableLength) {
 		z = sumShrink[end] - sumShrink[start];
@@ -108,7 +111,7 @@ function computeRatio(list, start, end, line, lineLengths) {
 		if (z > 0) {
 			ratio = (availableLength - l) / z;
 		} else {
-			ratio = 10000;
+			ratio = infinity;
 		}
 	}
 	return ratio;
@@ -129,12 +132,14 @@ function computeFitnessClass(ratio) {
 function addActiveNode(node) {
 	var index = 0, insertIndex;
 
+	// insert at the correct line
 	while (index < activeNodes.length && activeNodes[index].line < node.line) {
 		index += 1;
 	}
 
 	insertIndex = index;
 
+	// filter out duplicates with the same position, line and fitness 
 	while (index < activeNodes.length && activeNodes[index].line === node.line) {
 		if (activeNodes[index].fitnessClass === node.fitnessClass && activeNodes[index].position === node.position) {
 			return;
@@ -142,6 +147,35 @@ function addActiveNode(node) {
 		index += 1;
 	}
 	activeNodes.splice(insertIndex, 0, node);	
+}
+
+function sortMerge(a, b, comparison) {
+	var result = [], tmp, ai = 0, bi = 0;
+	while (ai < a.length && bi < b.length) {
+		tmp = comparison(a[ai], b[bi]);
+
+		if (tmp === 0) {
+			result.push(a[ai]);
+			ai += 1;
+			bi += 1;
+		} else if (tmp < 0) {
+			result.push(a[ai]);
+			ai += 1;
+		} else if (tmp > 0) {
+			result.push(b[bi]);
+			bi += 1;
+		}
+	}
+	while (ai < a.length) {
+		result.push(a[ai]);
+		ai += 1;
+	}
+	while (bi < b.length) {
+		result.push(b[bi]);
+		bi += 1;
+	}
+	//print(result);
+	return result;
 }
 
 function computeBreakPoints(list, lineLengths, options) {
@@ -157,7 +191,7 @@ function computeBreakPoints(list, lineLengths, options) {
 		penalties = [],
 		flags = [],
 		breaks = [],
-		tmp;
+		tmp, P;
 
 	var c = 0;
 
@@ -185,64 +219,87 @@ function computeBreakPoints(list, lineLengths, options) {
 		}
 	});
 
-	// Push the start breakpoint
+	// create an active node representing the beginning of the paragraph
 	activeNodes.push(new BreakPoint(0, 0, 1, 0, 0, 0, 0));
+	P = undefined;
 
-	list.forEach(function (B, index) {
-		var breakPoints = [];
+	list.forEach(function (b, index) {
 
-		if (isFeasibleBreakPoint(list, index)) {
+		// if b is a legal breakpoint
+		if (isLegalBreakPoint(list, index)) {
+
+			// initialize the feasible breaks at b to the empty set
+			var breakPoints = [],
+				testPoints = [[]];
 
 			// Using a filter is more efficient since it only modifies the array once,
 			// instead of N times where N is the number of deactivated breakpoints.
-			activeNodes = activeNodes.filter(function (A) {
-				var ratio = computeRatio(list, A.position, index, A.line, lineLengths),
-					demerits = 0;
+			// for each active node a
+			activeNodes = activeNodes.filter(function (a) {
+				// compute the adjustment ratio r from a to b
+				var ratio = computeRatio(list, a.position, index, a.line, lineLengths),
+					demerits = 0, absRatio = Math.abs(ratio);
 
-				// Found a new feasible breakpoint: calculate its demerits and fitness class and temporarily
-				// store it until we put it in the active list.
+				// if -1 <= r < p then <record a feasible break from a to b
 				if (-1 <= ratio && ratio <= tolerance) {
 					
 					// TODO: verify this with the notes at the end of chapter 3 of "Digital Typography"
 					if (penalties[index] >= 0) {
-						demerits = Math.pow(1 + 100 * Math.pow(Math.abs(ratio), 3) + penalties[index], 3);
-					} else if (isForcedBreak(B)) {
-						demerits = Math.pow(1 + 100 * Math.pow(Math.abs(ratio), 3), 2) - Math.pow(penalties[index], 2);
+						demerits = Math.pow(1 + 100 * Math.pow(absRatio, 3) + penalties[index], 2);
+					} else if (isForcedBreak(b)) {
+						demerits = Math.pow(1 + 100 * Math.pow(absRatio, 3), 2) - Math.pow(penalties[index], 2);
 					} else {
-						demerits = Math.pow(Math.pow(1 + 100 * Math.abs(ratio), 3), 2);
+						demerits = Math.pow(Math.pow(1 + 100 * absRatio, 3), 2);
 					}
 
-					demerits = demerits + (flaggedDemerit * flags[index] * flags[A.position]);
+					demerits = demerits + (flaggedDemerit * flags[index] * flags[a.position]);
 					fitnessClass = computeFitnessClass(ratio);
 
 					// Add extra demerit if the difference between fitness classes is greater than 1
-					if (Math.abs(fitnessClass - A.fitnessClass) > 1) {
+					if (Math.abs(fitnessClass - a.fitnessClass) > 1) {
 						demerits += fitnessDemerit;
 					}
 
-					breakPoints.push(new BreakPoint(index, A.line + 1, fitnessClass, sumWidth[index], sumStretch[index], sumShrink[index], demerits, A));
+					breakPoints.push(new BreakPoint(index, a.line + 1, fitnessClass, sumWidth[index], sumStretch[index], sumShrink[index], demerits, a));
 				} 
 
-				if (ratio < -1 || (B.type === 'penalty' && B.isForcedBreak())) {
+				// if r < -1 or <b is a forced break> then <deactive node a>
+				if (ratio < -1 || (b.type === 'penalty' && b.isForcedBreak())) {
 					return false;
 				}
 				return true;
 			});
-			// TODO: see if this can be made faster. Currently it takes about 1/4th of the total time
-			// the main issue is constantly inserting items in the middle of the active list array.
-			breakPoints.forEach(function (breakPoint) {
-				addActiveNode(breakPoint);
+			// append the best such breaks as active nodes
+			// TODO: verify the correctness of this
+			var test = sortMerge(breakPoints, activeNodes, function (d, e) {
+				if (d.line === e.line && e.fitnessClass === d.fitnessClass && d.position === e.position) {
+					return 0;
+				}
+
+				if (d.line === e.line) {
+					return 0;
+				} else if (d.line < e.line) {
+					return -1;	
+				} else {
+					return 1;
+				}
 			});
+			
+			//breakPoints.forEach(function (breakPoint) {
+			//	addActiveNode(breakPoint);
+			//});
+			activeNodes = test;
 		}
 	});
 
-	// Find the active node with the least demerit by starting the reduce with +Infinity demerit.
+	// choose the active node with the fewest total demerits
 	tmp = activeNodes.reduce(function (a, b) {
 		return a.demerits < b.demerits ? a : b;
 	}, {demerits: Infinity});
 
 	// TODO: implement looseness
 
+	// use the chosen node to determine the optimum breakpoint sequence.
 	// Follow the previous positions until we reach the start (undefined)
 	while (tmp !== undefined) {
 		breaks.push(tmp.position);
