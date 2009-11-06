@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>TypeSet</title>
+		<style>
+			.example {
+				width: 350px;
+				font-size: 14px;
+				line-height: 20px;
+				font-family: 'times';
+				text-align: justify;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			#canvas {
+				width: 450px;
+				height: 200px;
+			}	
+
+
+			/**
+			 * TeX logo typesetting courtesy of Edward O'Conner (http://edward.oconnor.cx/2007/08/tex-poshlet)
+			 */
+			.tex sub {
+				text-transform: uppercase;
+				vertical-align: -0.5ex;
+				margin-left: -0.1667em;
+				margin-right: -0.125em;
+			}
+			.tex sub {
+				font-size: 1em;
+			}
+
+			body {
+				width: 60%;
+				margin-left: auto;
+				margin-right: auto;
+				font-family: 'times';
+				font-size: 1.15em;
+				line-height: 150%;
+			}
+
+			h1, h2 {
+				font-weight: normal;
+				font-family: 'times';
+			}
+
+			h1 {
+				text-align: center;
+			}
+
+			h2 {
+				margin-bottom: 0;
+			}
+
+			p sub, p sup {
+				font-size: 0.7em;
+			}
+
+			p sup {
+				vertical-align: 1ex;
+			}
+
+			p sub {
+				vertical-align: -0.5ex;
+			}
+
+			p.subtitle {
+				padding:0;
+				margin: 0;
+				font-family: times;
+				text-align: center;
+				margin-top: -1.5em;
+				margin-bottom: 2em;
+			}
+		</style>
+	</head>
+	<body onload="typeset();">
+		<h1><span class="tex">T<sub>e</sub>X</span> line breaking algorithm in HTML5 Canvas</h1>
+		<p class="subtitle">Bram Stein (<a href="http://www.bramstein.com/">http://www.bramstein.com</a>)</p>
+		<p>This is an implementation of the <a href="http://www3.interscience.wiley.com/journal/113445055/abstract?CRETRY=1&SRETRY=0">Knuth and Plass line breaking algorithm</a> using JavaScript and the HTML5 canvas element. The goal of this implementation is to optimally set text in the new HTML5 canvas element, and ultimately implement a rich text editor using JavaScript and HTML5 features.</p>
+		<p>The paragraph below is set using a (simplified) JavaScript implementation of the classic Knuth and Plass algorithm as used in <span class="tex">T<sub>e</sub>X</span>. The numbers on the right of each line are the ratio of stretching or shrinking compared to the optimal line width. This example uses a default space of <sup>1</sup>⁄<sub>3</sub> em width, with a stretchability and shrink-ability of <sup>1</sup>⁄<sub>6</sub> em and <sup>1</sup>⁄<sub>9</sub> em respectively.</p>
+		<div class="example"><canvas id="canvas" width="450" height="200">
+		</canvas></div>
+		<p>The following paragraph is set by your browser using <code>text-align: justify</code>. Notice the second and third line have greater inter-word spacing than the canvas version, which stretches the first line in order to minimize the inter-word spacing in later lines. The browser also ends up with 10 lines instead of the 9 found by the Knuth and Plass line breaking algorithm. The comparison might not be completely fair since we don't know the default inter-word width used by the browser (nor its stretching and shrinking parameters.)</p>
+		<p class="example">In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favourite plaything.</p>
+		<h2>To-do</h2>
+		<p>The following are some extensions to the algorithm discussed in the original paper, which I intend to implement at some point.</p>
+		<ul>
+			<li>Fitness classes to classify lines into different ratio categories (e.g. tight, loose, very loose) etc. This can then be used to avoid adjacent lines with fitness classes that lie too far apart.</li>
+			<li>Variable line width to flow text around illustrations, asides, quotes and the like.</li>
+			<li>Hyphenation using <a href="http://www.tug.org/docs/liang/">Frank Liang's algorithm</a>. This will also improve the quality of the line breaks as it introduces more potential line breaks in a paragraph.</li>
+			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. I'm not sure about the complexity of this one yet, but it seems interesting enough to try.</li>
+			<li>The current code uses the global name-space for variables and functions, it would be good to wrap these up in a module, with a well defined API.</li>
+		</ul>
+
+		<h2>To don't</h2>
+		<ul>
+			<li>The original Knuth and Plass algorithm includes a "looseness" parameter to set a paragraph using more lines than the optimal solution. As far as I can tell this is used to "squeeze" a paragraph on a page near a section end. I currently have no need for that as web pages are virtually unlimited in vertical space.</li>
+		</ul>
+		<h2>Source code</h2>
+		<ul>
+			<li><a href="myfit.js">myfit.js</a> (main algorithm, drawing routines are in this document.)</li>
+		</ul>
+		<script type="text/javascript" src="../core/object.js"></script>
+		<script type="text/javascript" src="../core/array.js"></script>
+		<script type="text/javascript" src="../core/array.extra.js"></script>
+		<script type="text/javascript" src="myfit.js"></script>
+		<script type="text/javascript">
+			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favourite plaything.";
+
+			function typeset() {
+				var c = document.getElementById('canvas'),
+					context = null;
+
+				if (c.getContext && c.getContext('2d')) {
+					context = c.getContext('2d');
+					
+					context.font = '14px times';
+
+					// Use the width of an uppercase M as the "em" base value.
+					var em = context.measureText("M").width,
+						hyphen = context.measureText('-').width,
+						spaceWidth = (1 / 3) * em,
+						spaceStretch = (1 / 6) * em,
+						spaceShrink = (1 / 9) * em,
+						maxLength = 350,
+						lineHeight = 20,
+						list = [],
+						words = text.split(/\s/),
+						total = 0;
+
+					words.forEach(function (value, index, array) {
+						list.push(new Box(context.measureText(value).width, value));
+
+						if (index === array.length - 1) {
+							list.push(new Penalty(0, infinity, 0));
+							list.push(new Glue(0, infinity, 0));
+							list.push(new Penalty(0, -infinity, 1));
+						} else {
+							list.push(new Glue(spaceWidth, spaceStretch, spaceShrink));
+						}
+					});
+
+					init(list);
+
+					var breakPoints = computeBreakPoints(list, maxLength, {tolerance: 1}),
+						line = 0,
+						lineStart = 0,
+						r = 0,
+						point, j = 0, i = 1, node, width, output = [], x = 0, y = lineHeight;
+					
+					for (i = 1; i < breakPoints.length; i += 1) {
+						point = breakPoints[i];
+						r = computeRatio(list, lineStart, point, maxLength);
+
+						for (j = lineStart; j < point; j += 1) {
+							node = list[j];
+
+							if (node.type === 'glue') {
+								width = node.computeWidth(r);
+								x += width;
+							} else if (node.type === 'box') {
+								if (node.value) {
+									context.fillText(node.value, x, y);
+									x += node.width;
+								} else {
+									x += node.width;
+								}
+							}
+						}
+
+						context.fillText(r.toFixed(3), x + 20 + (r < 0 ? 0 : hyphen), y);
+						total += Math.abs(r);
+						x = 0;
+						y += lineHeight;
+						lineStart = point + 1;
+					}
+					context.fillText(total.toFixed(3), x, y + lineHeight);
+				}
+			}
+		</script>
+	</body>
+</html>
+
