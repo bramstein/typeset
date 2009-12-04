@@ -7,7 +7,6 @@
 			.example {
 				overflow: auto;
 				margin-left: 25%;
-				margin-right: 25%;
 			}
 
 			.example ul {
@@ -108,12 +107,19 @@
 	<body>
 		<h1><span class="tex">T<sub>e</sub>X</span> line breaking algorithm in HTML5 Canvas</h1>
 		<p class="subtitle">Bram Stein (<a href="http://www.bramstein.com/">http://www.bramstein.com</a> - <a href="mailto:b.l.stein@gmail.com">b.l.stein@gmail.com</a>)</p>
+
 		<p>This is an implementation of the <a href="http://www3.interscience.wiley.com/journal/113445055/abstract?CRETRY=1&SRETRY=0">Knuth and Plass line breaking algorithm</a> using JavaScript and the HTML5 canvas element. The goal of this implementation is to optimally set text in the new HTML5 canvas element, and ultimately implement a rich text editor using JavaScript and HTML5 features.</p>
 		<p>The paragraph below is set using a (simplified) JavaScript implementation of the classic Knuth and Plass algorithm as used in <span class="tex">T<sub>e</sub>X</span>. The numbers on the right of each line are the ratio of stretching or shrinking compared to the optimal line width. This example uses a default space of <sup>1</sup>⁄<sub>3</sub> em width, with a stretchability and shrink-ability of <sup>1</sup>⁄<sub>6</sub> em and <sup>1</sup>⁄<sub>9</sub> em respectively.</p>
 		<div class="example"><canvas id="canvas" width="350" height="200"></canvas></div>
 		<p>The following paragraph is set by your browser using <code>text-align: justify</code>. Notice the second and fifth line have greater inter-word spacing than the canvas version, which stretches the first line in order to minimize the inter-word spacing in later lines.</p>
 		<div class="example"><p id="browser">In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favourite plaything.</p></div>
-		<p> The browser also ends up with ten lines instead of the nine found by the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word width used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in Firefox are either identical or very similar.</p>
+		<p> The browser also ends up with ten lines instead of the nine found by the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word width used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in Firefox are either identical or very similar. The next section explains how the values for your browser were calculated.</p>
+
+		<h2>Measuring the quality of browser line breaks</h2>
+		<p>Unfortunately there is no API to retrieve the positions of the line breaks the browser inserted so we'll have to resort to some trickery. By wrapping each word in an invisible <code>&lt;span&gt;</code> element and retrieving its <code>y</code> position we can find out when a new line starts. If the <code>y</code> position of the current word is different from the previous word we know a new line has started. This way a paragraph is split up in several individual lines.</p>
+
+		<p>The ratios are then calculated by measuring the difference between the width of each line when <code>text-align</code> is set to <code>justify</code> and when it is set to <code>right</code>. This difference is then divided by the amount of stretchability of the line: i.e. the number of spaces multiplied by the stretch parameter for spaces. Although we don't know the actual stretchability we can use <sup>1</sup>/<sub>6</sub> em, just like the Knuth and Plass algorithm if we only use it for comparison.</p>
+
 		<h2>To-do</h2>
 		<p>The following are some extensions to the algorithm discussed in the original paper, which I intend to implement at some point.</p>
 		<ul>
@@ -122,13 +128,15 @@
 			<li>Hyphenation using <a href="http://www.tug.org/docs/liang/">Frank Liang's algorithm</a>. This will also improve the quality of the line breaks as it introduces more potential line breaks in a paragraph.</li>
 			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. I'm not sure about the complexity of this one yet, but it seems interesting enough to try.</li>
 			<li>The current code uses the global name-space for variables and functions, it would be good to wrap these up in a module, with a well defined API.</li>
-			<li>Test in other browsers: currently it seems to work fine with Firefox on Linux and Windows. Firefox on OSX, however performs badly (seems to be caused by strange font metrics, and bad anti-aliasing.) Also works fine with Safari on OSX.
+			<li>Test in other browsers: currently it seems to work fine with Firefox on Linux and Windows. Firefox on OSX, however performs badly (seems to be caused by strange font metrics, and bad anti-aliasing.) Also works fine with Safari on OSX.</li>
+			<li>Compare quality against line-breaking implemented by Internet Explorer's <code>text-justify</code> CSS property.</li>
 		</ul>
 
 		<h2>To don't</h2>
 		<ul>
 			<li>The original Knuth and Plass algorithm includes a "looseness" parameter to set a paragraph using more lines than the optimal solution. As far as I can tell this is used to "squeeze" a paragraph on a page near a section end. I currently have no need for that as web pages are virtually unlimited in vertical space.</li>
 		</ul>
+
 		<h2>Source code</h2>
 		<ul>
 			<li><a href="myfit.js">myfit.js</a> (main algorithm, drawing routines are in this document.)</li>
@@ -141,7 +149,7 @@
 		<script type="text/javascript">
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favourite plaything.";
 
-			function typeset() {
+			function canvasTypeset() {
 				var c = document.getElementById('canvas'),
 					context = null;
 
@@ -225,9 +233,7 @@
 				}
 			}
 
-			jQuery(function ($) {
-				typeset();
-				
+			function browserTypeset() {
 				var original = $('#browser'),
 					width = original.width(),
 					copy = original.clone(),
@@ -300,7 +306,11 @@
 				html.push('</ul>');
 
 				$('#browser').parent().append(html.join(''));
-				
+			}
+
+			jQuery(function ($) {
+				canvasTypeset();
+				browserTypeset();
 			});
 		</script>
 	</body>
