@@ -45,14 +45,12 @@ Penalty.prototype.type = 'penalty';
 Penalty.prototype.toString = function () {
 	return '(Penalty: ' + this.penalty + ')';
 };
-Penalty.prototype.isForcedBreak = function () {
-	return this.penalty === -infinity;
-};
 
-function BreakPoint(position, demerits, previous) {
+function BreakPoint(position, demerits, previous, line) {
 	this.position = position;
 	this.demerits = demerits;
 	this.previous = previous;
+	this.line = line || 0;
 }
 
 BreakPoint.prototype.toString = function () {
@@ -66,22 +64,8 @@ var sumWidth = [],
 	penalties = [],
 	flags = [];
 
-var isLegalBreakPoint = function (list, index) {
-	var node = list[index];
-
-	if (node.type === 'penalty' && node.penalty < infinity) {
-		return true;
-	} else if (index > 0 && node.type === 'glue' && list[index - 1].type === 'box') {
-		return true;
-	} else {
-		return false;
-	}
-};
-
 // Initialize a running sum of width, stretch and shrink. Also
-// compile a list of penalties and flags for quick look-up. This
-// can also be calculated while computing the breakpoints
-// at a later stage.
+// compile a list of penalties and flags for quick look-up.
 var init = function (list) {
 	var sum = {
 			stretch: 0,
@@ -108,9 +92,10 @@ var init = function (list) {
 	});
 };
 
-var computeRatio = function (list, start, end, lineLength) {
+var computeRatio = function (list, start, end, lineLengths, line) {
 	var l = sumWidth[end] - sumWidth[start],
-		availableLength = 0, y = 0, z = 0, ratio = 0;
+		availableLength = 0, y = 0, z = 0, ratio = 0,
+		lineLength = line < lineLengths.length ? lineLengths[line] : lineLengths[lineLengths.length - 1];
 
 	if (list[end].type === 'penalty') {
 		l += list[end].width;
@@ -136,7 +121,7 @@ var computeRatio = function (list, start, end, lineLength) {
 	return ratio;
 };
 
-var computeBreakPoints = function (list, lineLength, options) {
+var computeBreakPoints = function (list, lineLengths, options) {
 	var tolerance = options.tolerance || 1,
 		flaggedDemerit = 100, tmp = [], breaks = [];
 
@@ -144,53 +129,60 @@ var computeBreakPoints = function (list, lineLength, options) {
 		return [];
 	}
 
-	activeNodes.push(new BreakPoint(0, 0, undefined));
+	activeNodes.push(new BreakPoint(0, 0, undefined, 0));
 
 	list.forEach(function (breakPoint, breakPointIndex) {
-		if (isLegalBreakPoint(list, breakPointIndex)) {
+		// A legal breakpoint is a box followed by glue, or a finite penalty.
+		if ((breakPointIndex > 0 && breakPoint.type === 'glue' && list[breakPointIndex - 1].type === 'box') ||
+			(breakPoint.type === 'penalty' && breakPoint.penalty < infinity)) {
+			
 			// List containing potential active nodes. We keep this list
 			// because we don't know which active nodes create the best
 			// new active node for this feasible breakpoint until we've 
 			// tried them all.
-			var potentialActiveNodes = [];
+			var potentialActiveNodes = {};
 
 			// Loop through all the active nodes and calculate the ratio
-			// from the active nodes to the current word (breakpoint).
+			// from the active nodes to the current word (breakpoint.)
 			activeNodes = activeNodes.filter(function (activeNode) {
-				var ratio = computeRatio(list, activeNode.position, breakPointIndex, lineLength),
+				var ratio = computeRatio(list, activeNode.position, breakPointIndex, lineLengths, activeNode.line),
 					demerits = 0, badness = 0;
 
-				// if the ratio is within an acceptable tolerance range we found a new 
+				// If the ratio is within an acceptable tolerance range we found a new 
 				// breakpoint. 
 				if (-1 <= ratio && ratio <= tolerance) {
 					badness = 100 * Math.pow(Math.abs(ratio), 3);
 
+					// Positive penalty
 					if (penalties[breakPointIndex] >= 0) {
 						demerits = Math.pow(1 + badness + penalties[breakPointIndex], 2);
+					// Negative penalty
 					} else if (penalties[breakPointIndex] !== -infinity) {
 						demerits = Math.pow(1 + badness - penalties[breakPointIndex], 2);
+					// All other cases
 					} else {
 						demerits = Math.pow(1 + badness, 2);
 					}
 
 					demerits += (flaggedDemerit * flags[breakPointIndex] * flags[activeNode.position]);
 
-					potentialActiveNodes.push(new BreakPoint(breakPointIndex, activeNode.demerits + demerits, activeNode));
+					potentialActiveNodes[activeNode.line + 1] = [];
+					potentialActiveNodes[activeNode.line + 1].push(new BreakPoint(breakPointIndex, activeNode.demerits + demerits, activeNode, activeNode.line + 1));
 				}
 
-				// If the ratio is too large or the breakPoint is forced, remove the active node
-				if (ratio < -1 || (breakPoint.type === 'penalty' && breakPoint.isForcedBreak())) {
+				// If the ratio is too large or the breakPoint is forced, remove the active node.
+				if (ratio < -1 || (breakPoint.type === 'penalty' && breakPoint.penalty === -infinity)) {
 					return false;
 				}
 				return true;
 			});
 
-			// add the break point with the least total demerits to the active nodes list
-			if (!potentialActiveNodes.isEmpty()) {
-				activeNodes.push(potentialActiveNodes.reduce(function (a, b) {
+			// Append the best feasible breaks as active nodes.
+			Object.forEach(potentialActiveNodes, function (line) {
+				activeNodes.push(line.reduce(function (a, b) {
 					return a.demerits < b.demerits ? a : b;
 				}, {demerits: Infinity}));
-			}
+			});
 		}
 	});
 

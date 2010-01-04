@@ -200,7 +200,7 @@
 
 					init(list);
 
-					var breakPoints = computeBreakPoints(list, maxLength, {tolerance: 1}),
+					var breakPoints = computeBreakPoints(list, [maxLength, maxLength - 15, maxLength - 25, maxLength - 35, maxLength - 45, maxLength - 55, maxLength - 45, maxLength - 35, maxLength - 25, maxLength - 15], {tolerance: 1}),
 						line = 0,
 						lineStart = 0,
 						r = 0,
@@ -209,7 +209,7 @@
 					
 					for (i = 1; i < breakPoints.length; i += 1) {
 						point = breakPoints[i];
-						r = computeRatio(list, lineStart, point, maxLength);
+						r = computeRatio(list, lineStart, point, [maxLength, maxLength - 15, maxLength - 25, maxLength - 35, maxLength - 45, maxLength - 55, maxLength - 45, maxLength - 35, maxLength - 25, maxLength - 15], i - 1);
 
 						for (j = lineStart; j < point; j += 1) {
 							node = list[j];
@@ -235,6 +235,7 @@
 						lineStart = point + 1;
 					}
 					context.fillText(total.toFixed(3), x, y + lineHeight);
+					//console.log(total);
 
 					html.push('<ul>');
 					ratios.forEach(function (ratio) {
