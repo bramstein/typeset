@@ -102,6 +102,10 @@
 				margin-top: -1.5em;
 				margin-bottom: 2em;
 			}
+
+			blockquote {
+				font-style: italic;
+			}
 		</style>
 	</head>
 	<body>
@@ -126,7 +130,18 @@
 			<li>Fitness classes to classify lines into different ratio categories (e.g. tight, loose, very loose) etc. This can then be used to avoid adjacent lines with fitness classes that lie too far apart.</li>
 			<li>Variable line width to flow text around illustrations, asides, quotes and the like.</li>
 			<li>Hyphenation using <a href="http://www.tug.org/docs/liang/">Frank Liang's algorithm</a>. This will also improve the quality of the line breaks as it introduces more potential line breaks in a paragraph.</li>
-			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. I'm not sure about the complexity of this one yet, but it seems interesting enough to try.</li>
+			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. A quote from the original Knuth and Plass paper explains how to implement it: 
+
+				<blockquote>Some people prefer to have the right edge of their text look ‘solid’, by setting periods,
+				commas, and other punctuation marks (including inserted hyphens) in the right-hand
+				margin. For example, this practice is occasionally used in contemporary advertising.
+				It is easy to get inserted hyphens into the margin: We simply let the width of the
+				corresponding penalty item be zero. And it is almost as easy to do the same for periods
+				and other symbols, by putting every such character in a box of width zero and adding
+				the actual symbol width to the glue that follows. If no break occurs at this glue, the
+				accumulated width is the same as before; and if a break does occur, the line will be
+				justified as if the period or other symbol were not present.</blockquote>
+			</li>
 			<li>The current code uses the global name-space for variables and functions, it would be good to wrap these up in a module, with a well defined API.</li>
 			<li>Test in other browsers: currently it seems to work fine with Firefox on Linux and Windows. Firefox on OSX, however performs badly (seems to be caused by strange font metrics, and bad anti-aliasing.) Also works fine with Safari on OSX.</li>
 			<li>Compare quality against line-breaking implemented by Internet Explorer's <code>text-justify</code> CSS property.</li>
