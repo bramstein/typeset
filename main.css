@@ -1,0 +1,59 @@
+/**
+ * TeX logo typesetting courtesy of Edward O'Conner (http://edward.oconnor.cx/2007/08/tex-poshlet)
+ */
+.tex sub {
+	text-transform: uppercase;
+	vertical-align: -0.5ex;
+	margin-left: -0.1667em;
+	margin-right: -0.125em;
+}
+.tex sub {
+	font-size: 1em;
+}
+
+body {
+	width: 50%;
+	margin-left: auto;
+	margin-right: auto;
+	font-family: 'Georgia', serif;
+	font-size: 1em;
+	line-height: 150%;
+}
+
+code {
+	font-size: 1.1em;
+}
+
+h1, h2 {
+	font-weight: normal;
+	font-family: 'Georgia',serif;
+}
+
+h1 {
+	text-align: center;
+}
+
+h2 {
+	margin-bottom: 0;
+}
+
+p sub, p sup {
+	font-size: 0.7em;
+}
+
+p sup {
+	vertical-align: 1ex;
+}
+
+p sub {
+	vertical-align: -0.5ex;
+}
+
+p.subtitle {
+	padding:0;
+	margin: 0;
+	font-family: times;
+	text-align: center;
+	margin-top: -1.5em;
+	margin-bottom: 2em;
+}
