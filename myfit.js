@@ -74,16 +74,16 @@ var init = function (list) {
 		};
 
 	list.forEach(function (node, index) {
+		penalties[index] = 0;
+		flags[index] = 0;
+
 		sumWidth[index] = sum.width;
 		sumStretch[index] = sum.stretch;
-		sumShrink[index] = sum.shrink;		
+		sumShrink[index] = sum.shrink;	
 
 		sum.width += node.width;
 		sum.stretch += node.stretch;
 		sum.shrink += node.shrink;
-
-		penalties[index] = 0;
-		flags[index] = 0;
 
 		if (node.type === 'penalty') {
 			penalties[index] = node.penalty;
@@ -123,7 +123,7 @@ var computeRatio = function (list, start, end, lineLengths, line) {
 
 var computeBreakPoints = function (list, lineLengths, options) {
 	var tolerance = options.tolerance || 1,
-		flaggedDemerit = 100, tmp = [], breaks = [];
+		flaggedDemerit = 100, tmp = [], breaks = [], i, lineStart;
 
 	if (list.isEmpty()) {
 		return [];
@@ -133,7 +133,7 @@ var computeBreakPoints = function (list, lineLengths, options) {
 
 	list.forEach(function (breakPoint, breakPointIndex) {
 		// A legal breakpoint is a box followed by glue, or a finite penalty.
-		if ((breakPointIndex > 0 && breakPoint.type === 'glue' && list[breakPointIndex - 1].type === 'box') ||
+		if ((breakPointIndex > 0 && breakPoint.type === 'glue' && list[breakPointIndex - 1].type === 'box') || 
 			(breakPoint.type === 'penalty' && breakPoint.penalty < infinity)) {
 			
 			// List containing potential active nodes. We keep this list
@@ -164,7 +164,7 @@ var computeBreakPoints = function (list, lineLengths, options) {
 						demerits = Math.pow(1 + badness, 2);
 					}
 
-					demerits += (flaggedDemerit * flags[breakPointIndex] * flags[activeNode.position]);
+					demerits += flaggedDemerit * flags[breakPointIndex] * flags[activeNode.position];
 
 					potentialActiveNodes[activeNode.line + 1] = [];
 					potentialActiveNodes[activeNode.line + 1].push(new BreakPoint(breakPointIndex, activeNode.demerits + demerits, activeNode, activeNode.line + 1));
@@ -179,9 +179,10 @@ var computeBreakPoints = function (list, lineLengths, options) {
 
 			// Append the best feasible breaks as active nodes.
 			Object.forEach(potentialActiveNodes, function (line) {
-				activeNodes.push(line.reduce(function (a, b) {
+				var newActiveNode = line.reduce(function (a, b) {
 					return a.demerits < b.demerits ? a : b;
-				}, {demerits: Infinity}));
+				}, {demerits: Infinity});
+				activeNodes.push(newActiveNode);
 			});
 		}
 	});
@@ -191,8 +192,15 @@ var computeBreakPoints = function (list, lineLengths, options) {
 	}, {demerits: Infinity});
 
 	while (tmp !== undefined) {
-		breaks.push(tmp.position);
+		breaks.push({position: tmp.position, ratio: 0});
 		tmp = tmp.previous;
 	}
-	return breaks.reverse();
+
+	breaks = breaks.reverse();
+
+	for (i = 1, lineStart = 0; i < breaks.length; i += 1) {
+		breaks[i].ratio = computeRatio(list, lineStart,  breaks[i].position, lineLengths, i - 1);
+		lineStart = breaks[i].position + 1;
+	}
+	return breaks;
 };
