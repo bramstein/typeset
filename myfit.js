@@ -46,44 +46,38 @@ Penalty.prototype.toString = function () {
 	return '(Penalty: ' + this.penalty + ')';
 };
 
-function BreakPoint(position, demerits, previous, line) {
+function BreakPoint(position, demerits, previous, line, totalWidth, totalStretch, totalShrink, ratio) {
 	this.position = position;
 	this.demerits = demerits;
 	this.previous = previous;
 	this.line = line || 0;
+	this.totalWidth = totalWidth;
+	this.totalStretch = totalStretch;
+	this.totalShrink = totalShrink;
+	this.ratio = ratio;
 }
 
 BreakPoint.prototype.toString = function () {
 	return '(Breakpoint: demerits=' + this.demerits + ', position=' + this.position + ')';
 };
 
-var sumWidth = [],
-	sumStretch = [],
-	sumShrink = [],
-	activeNodes = [],
+var activeNodes = [],
 	penalties = [],
-	flags = [];
+	flags = [],
+	sum = {
+		width: 0,
+		stretch: 0,
+		shrink: 0
+	};
 
 // Initialize a running sum of width, stretch and shrink. Also
 // compile a list of penalties and flags for quick look-up.
 var init = function (list) {
-	var sum = {
-			stretch: 0,
-			shrink: 0,
-			width: 0
-		};
-
+	// TODO: get rid of this, with some small changes we can look
+	// up penalties and flags dynamically.
 	list.forEach(function (node, index) {
 		penalties[index] = 0;
 		flags[index] = 0;
-
-		sumWidth[index] = sum.width;
-		sumStretch[index] = sum.stretch;
-		sumShrink[index] = sum.shrink;	
-
-		sum.width += node.width;
-		sum.stretch += node.stretch;
-		sum.shrink += node.shrink;
 
 		if (node.type === 'penalty') {
 			penalties[index] = node.penalty;
@@ -92,17 +86,17 @@ var init = function (list) {
 	});
 };
 
-var computeRatio = function (list, start, end, lineLengths, line) {
-	var l = sumWidth[end] - sumWidth[start],
+var computeRatio = function (list, activeNode, breakPointIndex, lineLengths) {
+	var l = sum.width - activeNode.totalWidth,
 		availableLength = 0, y = 0, z = 0, ratio = 0,
-		lineLength = line < lineLengths.length ? lineLengths[line] : lineLengths[lineLengths.length - 1];
+		lineLength = activeNode.line < lineLengths.length ? lineLengths[activeNode.line] : lineLengths[lineLengths.length - 1];
 
-	if (list[end].type === 'penalty') {
-		l += list[end].width;
+	if (list[breakPointIndex].type === 'penalty') {
+		l += list[breakPointIndex].width;
 	}
 
 	if (l < lineLength) {
-		y = sumStretch[end] - sumStretch[start];
+		y = sum.stretch - activeNode.totalStretch;
 
 		if (y > 0) {
 			ratio = (lineLength - l) / y;	
@@ -110,7 +104,7 @@ var computeRatio = function (list, start, end, lineLengths, line) {
 			ratio = infinity;
 		}
 	} else if (l > lineLength) {
-		z = sumShrink[end] - sumShrink[start];
+		z = sum.shrink - activeNode.totalShrink;
 
 		if (z > 0) {
 			ratio = (lineLength - l) / z;
@@ -129,12 +123,14 @@ var computeBreakPoints = function (list, lineLengths, options) {
 		return [];
 	}
 
-	activeNodes.push(new BreakPoint(0, 0, undefined, 0));
+	activeNodes.push(new BreakPoint(0, 0, undefined, 0, 0, 0, 0));
 
 	list.forEach(function (breakPoint, breakPointIndex) {
+		if (breakPoint.type === 'box') {
+			sum.width += breakPoint.width;
 		// A legal breakpoint is a box followed by glue, or a finite penalty.
-		if ((breakPointIndex > 0 && breakPoint.type === 'glue' && list[breakPointIndex - 1].type === 'box') || 
-			(breakPoint.type === 'penalty' && breakPoint.penalty < infinity)) {
+		} else if ((breakPointIndex > 0 && breakPoint.type === 'glue' && list[breakPointIndex - 1].type === 'box') || 
+			(breakPoint.type === 'penalty' && breakPoint.penalty !== infinity)) {
 			
 			// List containing potential active nodes. We keep this list
 			// because we don't know which active nodes create the best
@@ -145,7 +141,7 @@ var computeBreakPoints = function (list, lineLengths, options) {
 			// Loop through all the active nodes and calculate the ratio
 			// from the active nodes to the current word (breakpoint.)
 			activeNodes = activeNodes.filter(function (activeNode) {
-				var ratio = computeRatio(list, activeNode.position, breakPointIndex, lineLengths, activeNode.line),
+				var ratio = computeRatio(list, activeNode, breakPointIndex, lineLengths),
 					demerits = 0, badness = 0;
 
 				// If the ratio is within an acceptable tolerance range we found a new 
@@ -166,8 +162,26 @@ var computeBreakPoints = function (list, lineLengths, options) {
 
 					demerits += flaggedDemerit * flags[breakPointIndex] * flags[activeNode.position];
 
+					// compute width, stretch and shrink sums
+					var tw = sum.width,
+						ty = sum.stretch,
+						tz = sum.shrink, j;
+				
+					// TODO: clean this up
+					for (j = breakPointIndex; j < list.length; j += 1) {
+						if (list[j].type === 'box') {
+							break;
+						}
+						if (list[j].type === 'glue') {
+							tw += list[j].width;
+							ty += list[j].stretch;
+							tz += list[j].shrink;
+						} else if (penalties[j] === -infinity && j > breakPointIndex) {
+							break;
+						}
+					}
 					potentialActiveNodes[activeNode.line + 1] = [];
-					potentialActiveNodes[activeNode.line + 1].push(new BreakPoint(breakPointIndex, activeNode.demerits + demerits, activeNode, activeNode.line + 1));
+					potentialActiveNodes[activeNode.line + 1].push(new BreakPoint(breakPointIndex, activeNode.demerits + demerits, activeNode, activeNode.line + 1, tw, ty, tz, ratio));
 				}
 
 				// If the ratio is too large or the breakPoint is forced, remove the active node.
@@ -184,23 +198,26 @@ var computeBreakPoints = function (list, lineLengths, options) {
 				}, {demerits: Infinity});
 				activeNodes.push(newActiveNode);
 			});
+
+			if (breakPoint.type === 'glue') {
+				sum.width += breakPoint.width;
+				sum.stretch += breakPoint.stretch;
+				sum.shrink += breakPoint.shrink;
+			}
 		}
 	});
+
+	if (activeNodes.isEmpty()) {
+		console.log('Paragraph cannot be set.');
+	}
 
 	tmp = activeNodes.reduce(function (a, b) {
 		return a.demerits < b.demerits ? a : b;
 	}, {demerits: Infinity});
 
 	while (tmp !== undefined) {
-		breaks.push({position: tmp.position, ratio: 0});
+		breaks.push({position: tmp.position, ratio: tmp.ratio});
 		tmp = tmp.previous;
 	}
-
-	breaks = breaks.reverse();
-
-	for (i = 1, lineStart = 0; i < breaks.length; i += 1) {
-		breaks[i].ratio = computeRatio(list, lineStart,  breaks[i].position, lineLengths, i - 1);
-		lineStart = breaks[i].position + 1;
-	}
-	return breaks;
+	return breaks.reverse();
 };
