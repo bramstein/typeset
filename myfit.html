@@ -47,7 +47,7 @@
 
 			#canvas {
 				width: 350px;
-				height: 200px;
+				height: 300px;
 				float: left;
 			}
 		</style>
@@ -58,7 +58,7 @@
 
 		<p>This is an implementation of the <a href="http://www3.interscience.wiley.com/journal/113445055/abstract">Knuth and Plass line breaking algorithm</a> using JavaScript and the HTML5 canvas element. The goal of this implementation is to optimally set text in the new HTML5 canvas element, and ultimately implement a rich text editor using JavaScript and HTML5 features.</p>
 		<p>The paragraph below is set using a (simplified) JavaScript implementation of the classic Knuth and Plass algorithm as used in <span class="tex">T<sub>e</sub>X</span>. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of <sup>1</sup>⁄<sub>3</sub> em width, with a stretchability and shrink-ability of <sup>1</sup>⁄<sub>6</sub> em and <sup>1</sup>⁄<sub>9</sub> em respectively.</p>
-		<div class="example"><canvas id="canvas" width="350" height="200"></canvas></div>
+		<div class="example"><canvas id="canvas" width="350" height="300"></canvas></div>
 		<p>The following paragraph is set by your browser using <code>text-align: justify</code>. Notice the second and fifth line have greater inter-word spacing than the canvas version, which stretches the first line in order to minimize the inter-word spacing in later lines.</p>
 		<div class="example"><p id="browser"></p></div>
 		<p> The browser also ends up with ten lines instead of the nine found by the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word space used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in Firefox are either identical or very similar. The next section explains how the values for your browser were calculated.</p>
@@ -156,14 +156,12 @@
 						if (type === 'justify') {
 							list.push(new Glue(spaceWidth, spaceStretch, spaceShrink));
 						} else if (type === 'left') {
-							list.push(new Glue(0, 12, 0));
+							list.push(new Glue(0, 18, 0));
 							list.push(new Penalty(0, 0, 0));
-							list.push(new Glue(spaceWidth, -12, 0));
+							list.push(new Glue(spaceWidth, -18, 0));
 						}
 					}
 				});
-
-				init(list);
 
 				var breakPoints = computeBreakPoints(list, lineLengths, options),
 					lineStart = 0, r = 0, point, j = 0, i = 1, node, lines = [];
@@ -178,13 +176,19 @@
 
 						if (node.type === 'glue') {
 							node.width = node.computeWidth(r);
-							lines.peek().nodes.push(node);
+							// don't start lines with glue
+							if (type === 'left' && !lines.peek().nodes.isEmpty()) {
+								lines.peek().nodes.push(node);
+							} else if (type === 'justify') {
+								lines.peek().nodes.push(node);
+							}
 						} else if (node.type === 'box') {
 							lines.peek().nodes.push(node);
 						}
 					}
 					lineStart = point + 1;
 				}
+				console.log(lines);
 				return lines;
 			}
 
