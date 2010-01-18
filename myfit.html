@@ -144,21 +144,21 @@
 					spaceShrink = options.space.shrink * em,
 					words = text.split(/\s/),
 					list = [],
-					type = 'left';
+					type = 'justify';
 
 				words.forEach(function (value, index, array) {
-					list.push(new Box(measureText(value).width, value));
+					list.push(new Node('box', measureText(value).width, {'value': value}));
 
 					if (index === array.length - 1) {
-						list.push(new Glue(0, infinity, 0));
-						list.push(new Penalty(0, -infinity, 1));
+						list.push(new Node('glue', 0, {stretch: infinity, shrink: 0}));
+						list.push(new Node('penalty', 0, {penalty: -infinity, flagged: 1})); 
 					} else {
 						if (type === 'justify') {
-							list.push(new Glue(spaceWidth, spaceStretch, spaceShrink));
+							list.push(new Node('glue', spaceWidth, {stretch: spaceStretch, shrink: spaceShrink}));
 						} else if (type === 'left') {
-							list.push(new Glue(0, 18, 0));
-							list.push(new Penalty(0, 0, 0));
-							list.push(new Glue(spaceWidth, -18, 0));
+							list.push(new Node('glue', 0, {stretch: 18}));
+							list.push(new Node('penalty', 0));
+							list.push(new Node('glue', spaceWidth, {stretch: -18}));
 						}
 					}
 				});
@@ -175,7 +175,7 @@
 						node = list[j];
 
 						if (node.type === 'glue') {
-							node.width = node.computeWidth(r);
+							node.width = node.width + r * (r < 0 ? node.shrink : node.stretch);
 							// don't start lines with glue
 							if (type === 'left' && !lines.peek().nodes.isEmpty()) {
 								lines.peek().nodes.push(node);

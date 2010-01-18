@@ -7,51 +7,20 @@
  */
 var infinity = 10000;
 
-
-function Box(width, value) {
+function Node(type, width, options) {
+	this.type = type || 'box';
 	this.width = width || 0;
-	this.value = value;
-	this.shrink = 0;
-	this.stretch = 0;
 
-	this.penalty = 0;
-	this.flagged = 0;
+	options = options || {};
+
+	this.value = options.value || '';
+
+	this.shrink = options.shrink || 0;
+	this.stretch = options.stretch || 0;
+
+	this.penalty = options.penalty || 0;
+	this.flagged = options.flagged || 0;
 }
-
-Box.prototype.type = 'box';
-Box.prototype.toString = function () {
-	return "'" + this.value + "'";
-};
-
-function Glue(width, stretch, shrink) {
-	this.width = width || 0;
-	this.stretch = stretch || 0;
-	this.shrink = shrink || 0;
-
-	this.penalty = 0;
-	this.flagged = 0;
-}
-
-Glue.prototype.type = 'glue';
-Glue.prototype.toString = function () {
-	return '(Glue: width=' + this.width + ')';
-};
-Glue.prototype.computeWidth = function (ratio) {
-	return this.width + ratio * (ratio < 0 ? this.shrink : this.stretch);
-};
-
-function Penalty(width, penalty, flagged) {
-	this.width = width;
-	this.penalty = penalty;
-	this.flagged = flagged;
-	this.stretch = 0;
-	this.shrink = 0;
-}
-
-Penalty.prototype.type = 'penalty';
-Penalty.prototype.toString = function () {
-	return '(Penalty: ' + this.penalty + ')';
-};
 
 function BreakPoint(position, demerits, previous, line, total, ratio) {
 	this.position = position;
