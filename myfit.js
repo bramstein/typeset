@@ -5,6 +5,7 @@
  * Copyright 2009, Bram Stein
  * All rights reserved.
  */
+/*global console*/
 var infinity = 10000;
 
 function Node(type, width, options) {
