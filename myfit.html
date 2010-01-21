@@ -33,7 +33,7 @@
 				font-size: 14px;
 				line-height: 21px;
 				font-family: 'times';
-				text-align: justify;
+				text-align: left;
 			}
 
 			#browser, #browser-assisted {
@@ -73,7 +73,9 @@
 		<div class="example"><p id="browser-assisted"></p></div>
 		<p>Each line is wrapped in a <code>&lt;span&gt;</code> element, with the same stretchability and shrink-ability values as in the Canvas example. These values are multiplied by the stretch or shrink ratio and used as the word spacing for that line.</p>
 		<h2>Examples</h2>
-		<h3>Ragged right, ragged left and centered alignment</h3>
+		<h3>Ragged right and centered alignment</h3>
+
+		<p>Ragged left text can be achieved by using a ragged left set text and aligning its endings with the left border.</p>
 		<h3>Variable line width</h3>
 		<p>Variable line width to flow text around illustrations, asides, quotes and the like.</p>
 
@@ -129,7 +131,7 @@
 					stretch: 1 / 6,
 					shrink: 1 / 9
 				},
-				tolerance: 1
+				tolerance: 4
 			};
 
 
@@ -144,7 +146,7 @@
 					spaceShrink = options.space.shrink * em,
 					words = text.split(/\s/),
 					list = [],
-					type = 'justify';
+					type = 'left';
 
 				words.forEach(function (value, index, array) {
 					list.push(new Node('box', measureText(value).width, {'value': value}));
@@ -156,9 +158,9 @@
 						if (type === 'justify') {
 							list.push(new Node('glue', spaceWidth, {stretch: spaceStretch, shrink: spaceShrink}));
 						} else if (type === 'left') {
-							list.push(new Node('glue', 0, {stretch: 18}));
-							list.push(new Node('penalty', 0));
-							list.push(new Node('glue', spaceWidth, {stretch: -18}));
+							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
+							list.push(new Node('penalty', 0, {flagged: 0, penalty: 0}));
+							list.push(new Node('glue', spaceWidth, {stretch: -12, shrink: 0}));
 						}
 					}
 				});
@@ -177,12 +179,12 @@
 						if (node.type === 'glue') {
 							node.width = node.width + r * (r < 0 ? node.shrink : node.stretch);
 							// don't start lines with glue
-							if (type === 'left' && !lines.peek().nodes.isEmpty()) {
-								lines.peek().nodes.push(node);
-							} else if (type === 'justify') {
+							if (!lines.peek().nodes.isEmpty()) {
 								lines.peek().nodes.push(node);
 							}
 						} else if (node.type === 'box') {
+							lines.peek().nodes.push(node);
+						} else {
 							lines.peek().nodes.push(node);
 						}
 					}

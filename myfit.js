@@ -6,7 +6,8 @@
  * All rights reserved.
  */
 /*global console*/
-var infinity = 10000;
+var infinity = 10000,
+	debug = false;
 
 function Node(type, width, options) {
 	this.type = type || 'box';
@@ -23,10 +24,9 @@ function Node(type, width, options) {
 	this.flagged = options.flagged || 0;
 }
 
-function BreakPoint(position, demerits, previous, line, total, ratio) {
+function BreakPoint(position, demerits, line, ratio, total, previous, link) {
 	this.position = position;
 	this.demerits = demerits;
-	this.previous = previous;
 	this.line = line || 0;
 	this.total = total || {
 		width: 0,
@@ -34,11 +34,9 @@ function BreakPoint(position, demerits, previous, line, total, ratio) {
 		shrink: 0
 	};
 	this.ratio = ratio || 0;
+	this.previous = previous || undefined;
+	this.link = link || undefined;
 }
-
-BreakPoint.prototype.toString = function () {
-	return '(Breakpoint: demerits=' + this.demerits + ', position=' + this.position + ')';
-};
 
 var activeNodes = [],
 	sum = {
@@ -76,112 +74,159 @@ var computeRatio = function (list, activeNode, breakPointIndex, lineLengths) {
 	return ratio;
 };
 
+var computeSum = function (list, breakPointIndex) {
+	var result = {
+		width: sum.width,
+		stretch: sum.stretch,
+		shrink: sum.shrink
+	};
+
+	for (i = breakPointIndex; i < list.length; i += 1) {
+		if (list[i].type === 'box') {
+			break;
+		}
+		if (list[i].type === 'glue') {
+			result.width += list[i].width;
+			result.stretch += list[i].stretch;
+			result.shrink += list[i].shrink;
+		} else if (list[i].type === 'penalty' && list[i].penalty === -infinity && i > breakPointIndex) {
+			break;
+		}
+	}
+	return result;
+}
+
+var printList = function (node) {
+	var a = node, result = [];
+
+	while (a !== undefined) {
+		result.push(a);
+		a = a.link;
+	}
+	console.log(result);
+}
+
 var computeBreakPoints = function (list, lineLengths, options) {
 	var tolerance = options.tolerance || 1,
 		flaggedDemerit = options.flaggedDemerit || 100, 
 		tmp = [],
-		breaks = [];
+		breaks = [],
 
-	if (list.isEmpty()) {
-		return [];
-	}
+		// Create an active node representing the beginning of the paragraph. Active nodes
+		// are stored in a linked-list like structure with the link property point to the
+		// next active node in the list. The previous property is not to be confused with
+		// the previous node in a double linked list, as it is used to keep track of the
+		// active nodes leading to the active nodes with the least total demerits.
+		activeFirst = new BreakPoint(0, 0, 0, 0, undefined, undefined, undefined),
+		
+		// Pointer to the first node in the passive list. Consists of a linked list of deactivated
+		// nodes.
+		passiveFirst = undefined,
 
-	activeNodes.push(new BreakPoint(0, 0, undefined, 0, 0));
+		mainLoop = function (breakPoint, breakPointIndex) {
+			var active = activeFirst,
+				bestActive = undefined,
+				previousActive = undefined,
+				nextActive = undefined,
+				ratio = 0,
+				demerits = 0,
+				bestDemerits = infinity,
+				bestRatio = 0,
+				badness = 0, s;
 
-	list.forEach(function (breakPoint, breakPointIndex) {
-		if (breakPoint.type === 'box') {
-			sum.width += breakPoint.width;
-		// A legal breakpoint is a box followed by glue, or a finite penalty.
-		} else if ((breakPointIndex > 0 && breakPoint.type === 'glue' && list[breakPointIndex - 1].type === 'box') || 
-			(breakPoint.type === 'penalty' && breakPoint.penalty !== infinity)) {
-			
-			// List containing potential active nodes. We keep this list
-			// because we don't know which active nodes create the best
-			// new active node for this feasible breakpoint until we've 
-			// tried them all.
-			var potentialActiveNodes = {};
+			while (active !== undefined) {
+				nextActive = active.link;
 
-			// Loop through all the active nodes and calculate the ratio
-			// from the active nodes to the current word (breakpoint.)
-			activeNodes = activeNodes.filter(function (activeNode) {
-				var ratio = computeRatio(list, activeNode, breakPointIndex, lineLengths),
-					demerits = 0,
-					badness = 0,
-					i = 0,
-					tmpSum = {
-						width: sum.width,
-						stretch: sum.stretch,
-						shrink: sum.shrink
-					};
+				// compute the adjustment ratio from active to breakPointIndex
+				ratio = computeRatio(list, active, breakPointIndex, lineLengths);
 
-				// If the ratio is within an acceptable tolerance range we found a new 
-				// breakpoint. 
+				if (ratio < -1 || (breakPoint.type === 'penalty' && breakPoint.penalty === -infinity)) {
+					// Deactive the active node, at this point the active list contains:
+					// (node a).link -> (node x).link --> ... --> (node 0).link -> undefined 
+					if (previousActive === undefined) {
+						activeFirst = nextActive;
+					} else {
+						previousActive.link = nextActive;
+					}
+					active.link = passiveFirst;
+					passiveFirst = active;
+				} else {
+					previousActive = active;
+				}
+				
 				if (-1 <= ratio && ratio <= tolerance) {
+					// Compute demerits and fitness class
 					badness = 100 * Math.pow(Math.abs(ratio), 3);
 
 					// Positive penalty
-					if (breakPoint.penalty >= 0) {
+					if (breakPoint.type === 'penalty' && breakPoint.penalty >= 0) {
 						demerits = Math.pow(1 + badness + breakPoint.penalty, 2);
 					// Negative penalty
-					} else if (breakPoint.penalty !== -infinity) {
+					} else if (breakPoint.type === 'penalty' && breakPoint.penalty !== -infinity) {
 						demerits = Math.pow(1 + badness - breakPoint.penalty, 2);
 					// All other cases
 					} else {
 						demerits = Math.pow(1 + badness, 2);
 					}
-					
-					demerits += flaggedDemerit * breakPoint.flagged * list[activeNode.position].flagged;
 
-					// Compute width, stretch and shrink sums
-					for (i = breakPointIndex; i < list.length; i += 1) {
-						if (list[i].type === 'glue') {
-							tmpSum.width += list[i].width;
-							tmpSum.stretch += list[i].stretch;
-							tmpSum.shrink += list[i].shrink;
-						} else if (list[i].type === 'box' || (list[i].penalty === -infinity && i > breakPointIndex)) {
-							break;
-						}
+					if (breakPoint.type === 'penalty' && active.type === 'penalty') {
+						demerits += flaggedDemerit * breakPoint.flagged * active.flagged;
 					}
-				
-					potentialActiveNodes[activeNode.line + 1] = [];
-					potentialActiveNodes[activeNode.line + 1].push(new BreakPoint(breakPointIndex, activeNode.demerits + demerits, activeNode, activeNode.line + 1, tmpSum, ratio));
+
+					// TODO: implement fitness classes
+					bestActive = active;
+					bestDemerits = active.demerits + demerits;
+					bestRatio = ratio;
 				}
-				// If the ratio is too large or the breakPoint is forced, remove the active node.
-				if (ratio < -1 || (breakPoint.type === 'penalty' && breakPoint.penalty === -infinity)) {
-					return false;
-				}
-				return true;
-			});
+				active = nextActive;
+			}
 
 			// Append the best feasible breaks as active nodes.
-			Object.forEach(potentialActiveNodes, function (line) {
-				var newActiveNode = line.reduce(function (a, b) {
-					return a.demerits < b.demerits ? a : b;
-				}, {demerits: Infinity});
-				activeNodes.push(newActiveNode);
-			});
+			if (bestActive !== undefined) {
+				// Compute width, stretch and shrink sums
+				tmpSum = computeSum(list, breakPointIndex);
 
-			if (breakPoint.type === 'glue') {
-				sum.width += breakPoint.width;
-				sum.stretch += breakPoint.stretch;
-				sum.shrink += breakPoint.shrink;
+				// Insert new active nodes for breaks from the best active node to b
+				s = new BreakPoint(breakPointIndex, bestDemerits, bestActive.line + 1, bestRatio, tmpSum, bestActive, active);
+
+				if (previousActive === undefined) {
+					activeFirst = s;
+				} else {
+					previousActive.link = s;
+				}
+				previousActive = s;
 			}
+		};
+
+	if (list.isEmpty()) {
+		return [];
+	}
+
+	list.forEach(function (breakPoint, breakPointIndex) {
+		if (breakPoint.type === 'box') {
+			sum.width += breakPoint.width;
+		// A legal breakpoint is a box followed by glue
+		} else if (breakPoint.type === 'glue') {
+			if (breakPointIndex > 0 && list[breakPointIndex - 1].type === 'box') {
+				mainLoop(breakPoint, breakPointIndex);
+			}
+			sum.width += breakPoint.width;
+			sum.stretch += breakPoint.stretch;
+			sum.shrink += breakPoint.shrink;
+		} else if (breakPoint.type === 'penalty' && breakPoint.penalty !== infinity) {
+			mainLoop(breakPoint, breakPointIndex);
 		}
 	});
 
-	if (activeNodes.isEmpty()) {
-		console.log('Paragraph cannot be set.');
-	}
-
-	tmp = activeNodes.reduce(function (a, b) {
+	// TODO: select the active node with the least total demerits
+	/*tmp = activeNodes.reduce(function (a, b) {
 		return a.demerits < b.demerits ? a : b;
 	}, {demerits: Infinity});
+*/
+	tmp = activeFirst;
 
 	while (tmp !== undefined) {
 		breaks.push({position: tmp.position, ratio: tmp.ratio});
-		if (tmp.previous !== undefined) {
-		//	console.log(list.slice(tmp.previous.position, tmp.position));
-		}
 		tmp = tmp.previous;
 	}
 	return breaks.reverse();
