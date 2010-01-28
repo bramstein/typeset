@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>TypeSet</title>
+		<link rel="stylesheet" href="main.css"/>
+		<style>		
+			canvas {
+				border: 1px solid red;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="canvas" width="350" height="300"></canvas>
+		<script type="text/javascript" src="../core/linked-list.js"></script>
+		<script type="text/javascript">
+			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything.",
+
+				space = {
+					width: 1 / 3,
+					stretch: 1 / 6,
+					shrink: 1 / 9
+				},
+
+				tolerance = 1,
+
+				c = document.getElementById('canvas'),
+
+				context = c.getContext && c.getContext('2d'),
+
+				emWidth,
+
+				words = [],
+
+				maxWidth;
+
+			context.textBaseline = 'top';
+			context.font = '14px times';
+
+			emWidth = context.measureText('M').width;
+
+			maxWidth = context.canvas.width;
+
+			space.width *= emWidth;
+			space.stretch *= emWidth;
+			space.shrink *= emWidth;
+
+
+			words = text.split(/\s/);
+			console.log(space);
+			console.log(words);
+
+			function computeCost(start, end) {
+				var i, width = 0, stretch = 0, shrink = 0;
+				for (i = start; i < end; i += 1) {
+					width += context.measureText(words[i]).width;
+				}
+				// add the normal space width
+				width += (end - start) * space.width;
+
+				if (width < maxWidth) {
+					// Calculate the stretch ratio
+					stretch = (end - start) * space.stretch;
+					if (stretch > 0) {
+						return (maxWidth - width) / stretch;
+					} else {
+						return Infinity;
+					}
+
+				} else if (width > maxWidth) {
+					// Calculate the shrink ratio
+					shrink = (end - start) * space.shrink;
+					if (shrink > 0) {
+						return (maxWidth - width) / shrink;
+					} else {
+						return Infinity;
+					}
+				} else {
+					// perfect match
+					return 0;
+				}
+			}
+
+			function BreakPoint(position, ratio, previous) {
+				this.position = position;
+				this.ratio = ratio;
+				this.previous = previous;
+			}
+
+			BreakPoint.prototype.toString = function () {
+				return 'Position: ' + this.position + ', Ratio: ' + this.ratio;
+			};
+
+			var candidates = new LinkedList();
+			var potentials = [];
+
+			candidates.append(new Node(new BreakPoint(0, 0, null)));
+
+			console.log(candidates.toString());
+
+
+			words.forEach(function (word, index) {
+				candidates.forEach(function (active) {
+	
+					var ratio = computeCost(active.data.position, index);
+
+					if (-1 <= ratio && ratio <= tolerance) {
+						candidates.insertAfter(active, new Node(new BreakPoint(index, ratio, active))); 
+					}
+				});
+			});
+
+			console.log(candidates.toString());
+/*
+			// So now we have a tree of potential break points, and we need to find the route with
+			// the least total costs. We start searching for possible routes at the end of the candidate
+			// list. If the candidate list does not contain the end of the list, this paragraph can not
+			// be set using the given tolerance parameter.
+			potentials = potentials.reverse();
+
+			var routes = potentials.filter(function (p) {
+				return p.end === words.length - 1;
+			});
+
+			totalCost = 0;
+
+			routes.forEach(function (n) {
+				function find(node) {
+					node.cost += Math.abs(node.ratio);
+					
+					if (node.start === 0) {
+						console.log(totalCost);
+						return;
+					} else {
+						// find the node(s) this one is pointing to
+						var startNodes = potentials.filter(function (p) {
+							return p.end === node.start;
+						});
+						console.log(startNodes);
+						startNodes.forEach(find);
+					}
+				}
+
+				find(n);
+			});
+			console.log(routes);
+*/
+			/*potentials.forEach(function (p) {
+				var nextPotentials = potentials.filter(function (np) {
+					return np.start === p.end;
+				});
+				console.log(nextPotentials);
+			});*/
+		</script>
+	</body>
+</html>

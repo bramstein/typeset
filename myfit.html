@@ -79,6 +79,9 @@
 		<h3>Variable line width</h3>
 		<p>Variable line width to flow text around illustrations, asides, quotes and the like.</p>
 
+		<h2>The algorithm</h2>
+		<p>The principle behind the Knuth and Plass line breaking algorithm is simple: given a paragraph, try to minimize the amount of whitespace at the end of each line.</p>
+
 		<h2>To-do</h2>
 		<p>The following are some extensions to the algorithm discussed in the original paper, which I intend to implement (at some point.)</p>
 		<ul>
@@ -99,6 +102,7 @@
 			<li>The current code uses the global name-space for variables and functions, it would be good to wrap these up in a module, with a well defined API.</li>
 			<li>Test in other browsers: currently it seems to work fine with Firefox on Linux and Windows. Firefox on OSX, however performs badly (seems to be caused by strange font metrics, and bad anti-aliasing.) Also works fine with Safari on OSX.</li>
 			<li>Compare quality against line-breaking implemented by Internet Explorer's <code>text-justify</code> CSS property.</li>
+			<li>Figure out how to deal with dynamic paragraphs (i.e. paragraphs being edited) as their ratios will change during editing and thus (if used with the Knuth and Plass linebreaking algorithm) visibly move around.</li>
 		</ul>
 
 		<h2>To don't</h2>
@@ -131,7 +135,7 @@
 					stretch: 1 / 6,
 					shrink: 1 / 9
 				},
-				tolerance: 4
+				tolerance: 5
 			};
 
 
@@ -146,14 +150,25 @@
 					spaceShrink = options.space.shrink * em,
 					words = text.split(/\s/),
 					list = [],
-					type = 'left';
+					type = 'center';
+
+				if (type === 'center') {
+					list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
+				} else if (type === 'justify') {
+					//list.push(new Node('box', 12, {value: ''}));
+				}
 
 				words.forEach(function (value, index, array) {
 					list.push(new Node('box', measureText(value).width, {'value': value}));
 
 					if (index === array.length - 1) {
-						list.push(new Node('glue', 0, {stretch: infinity, shrink: 0}));
-						list.push(new Node('penalty', 0, {penalty: -infinity, flagged: 1})); 
+						if (type === 'justify' || type == 'left') {
+							list.push(new Node('glue', 0, {stretch: infinity, shrink: 0}));
+							list.push(new Node('penalty', 0, {penalty: -infinity, flagged: 1})); 
+						} else if (type === 'center') {
+							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
+							list.push(new Node('penalty', 0, {penalty: -infinity, flagged: 0}));
+						}
 					} else {
 						if (type === 'justify') {
 							list.push(new Node('glue', spaceWidth, {stretch: spaceStretch, shrink: spaceShrink}));
@@ -161,10 +176,17 @@
 							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
 							list.push(new Node('penalty', 0, {flagged: 0, penalty: 0}));
 							list.push(new Node('glue', spaceWidth, {stretch: -12, shrink: 0}));
+						} else if (type === 'center') {
+							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
+							list.push(new Node('penalty', 0, {flagged: 0, penalty: 0}));
+							list.push(new Node('glue', spaceWidth, {stretch: -24, shrink: 0}));
+							list.push(new Node('box', 0, {value: ''}));
+							list.push(new Node('penalty', {penalty: infinity, flagged: 0}));
+							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
 						}
 					}
 				});
-
+//console.log(list);
 				var breakPoints = computeBreakPoints(list, lineLengths, options),
 					lineStart = 0, r = 0, point, j = 0, i = 1, node, lines = [];
 
