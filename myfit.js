@@ -76,10 +76,11 @@ var computeRatio = function (list, activeNode, breakPointIndex, lineLengths) {
 
 var computeSum = function (list, breakPointIndex) {
 	var result = {
-		width: sum.width,
-		stretch: sum.stretch,
-		shrink: sum.shrink
-	};
+			width: sum.width,
+			stretch: sum.stretch,
+			shrink: sum.shrink
+		},
+		i = 0;
 
 	for (i = breakPointIndex; i < list.length; i += 1) {
 		if (list[i].type === 'box') {
@@ -94,7 +95,7 @@ var computeSum = function (list, breakPointIndex) {
 		}
 	}
 	return result;
-}
+};
 
 var printList = function (node) {
 	var a = node, result = [];
@@ -104,7 +105,7 @@ var printList = function (node) {
 		a = a.link;
 	}
 	console.log(result);
-}
+};
 
 var computeBreakPoints = function (list, lineLengths, options) {
 	var tolerance = options.tolerance || 1,
@@ -132,120 +133,115 @@ var computeBreakPoints = function (list, lineLengths, options) {
 				demerits = 0,
 				bestDemerits = 0,
 				bestRatio = 0,
-				badness = 0, s, 
-				minimumDemerits = infinity, j, classes = [], c;
+				badness = 0,
+				s, 
+				minimumDemerits = infinity,
+				j,
+				classes = [],
+				c,
+				tmpSum;
 
-			//while (true) {
+			minimumDemerits = infinity;
 
-				minimumDemerits = infinity;
+			classes = [
+				{node: undefined, demerits: infinity, ratio: infinity},
+				{node: undefined, demerits: infinity, ratio: infinity},
+				{node: undefined, demerits: infinity, ratio: infinity},
+				{node: undefined, demerits: infinity, ratio: infinity}	
+			];
 
-				classes = [
-					{node: undefined, demerits: infinity, ratio: infinity},
-					{node: undefined, demerits: infinity, ratio: infinity},
-					{node: undefined, demerits: infinity, ratio: infinity},
-					{node: undefined, demerits: infinity, ratio: infinity}	
-				];
+			// while current node is not undefined
+			while (active !== undefined) {
+				nextActive = active.link;
 
-				// while current node is not undefined
-				while (active !== undefined) {
-					nextActive = active.link;
+				// compute the adjustment ratio from active to breakPointIndex
+				ratio = computeRatio(list, active, breakPointIndex, lineLengths);
+				j = active.line + 1;
 
-					// compute the adjustment ratio from active to breakPointIndex
-					ratio = computeRatio(list, active, breakPointIndex, lineLengths);
-					j = active.line + 1;
-
-					if (ratio < -1 || (breakPoint.type === 'penalty' && breakPoint.penalty === -infinity)) {
-						// Deactive the active node, at this point the active list contains:
-						// (node a).link -> (node x).link --> ... --> (node 0).link -> undefined 
-						if (previousActive === undefined) {
-							activeFirst = nextActive;
-						} else {
-							previousActive.link = nextActive;
-						}
-						active.link = passiveFirst;
-						passiveFirst = active;
+				if (ratio < -1 || (breakPoint.type === 'penalty' && breakPoint.penalty === -infinity)) {
+					// Deactive the active node, at this point the active list contains:
+					// (node a).link -> (node x).link --> ... --> (node 0).link -> undefined 
+					if (previousActive === undefined) {
+						activeFirst = nextActive;
 					} else {
-						previousActive = active;
+						previousActive.link = nextActive;
 					}
-
-					if (-1 <= ratio && ratio <= tolerance) {
-						// Compute demerits and fitness class
-						badness = 100 * Math.pow(Math.abs(ratio), 3);
-
-						// Positive penalty
-						if (breakPoint.type === 'penalty' && breakPoint.penalty >= 0) {
-							demerits = Math.pow(1 + badness + breakPoint.penalty, 2);
-						// Negative penalty
-						} else if (breakPoint.type === 'penalty' && breakPoint.penalty !== -infinity) {
-							demerits = Math.pow(1 + badness - breakPoint.penalty, 2);
-						// All other cases
-						} else {
-							demerits = Math.pow(1 + badness, 2);
-						}
-
-						if (breakPoint.type === 'penalty' && active.type === 'penalty') {
-							demerits += flaggedDemerit * breakPoint.flagged * active.flagged;
-						}
-
-						if (ratio < -0.5) {
-							c = 0;
-						} else if (ratio <= 0.5) {
-							c = 1;
-						} else if (ratio <= 1) {
-							c = 2;
-						} else {
-							c = 3;
-						}
-
-						demerits += active.demerits;
-
-						//console.log(ratio);
-						//console.log(demerits);
-
-						if (demerits < classes[c].demerits) {
-							classes[c].demerits = demerits;
-							classes[c].node = active;
-							classes[c].ratio = ratio;
-							if (demerits < minimumDemerits) {
-								minimumDemerits = demerits;
-							}
-						}
-					}
-					active = nextActive;
-
-					if (active === undefined) {
-						break;
-					}
-
-					if (active !== undefined && active.line <= j && j <= lineLengths[0]) {
-						break;
-					}
+					active.link = passiveFirst;
+					passiveFirst = active;
+				} else {
+					previousActive = active;
 				}
-				//console.log(classes);
-				// Append the best feasible breaks as active nodes.
-				if (minimumDemerits < infinity) {
-					// Compute width, stretch and shrink sums
-					tmpSum = computeSum(list, breakPointIndex);
 
-					for (c = 0; c < 4; c += 1) {
-						if (classes[c].node !== undefined && classes[c].demerits <= minimumDemerits + flaggedDemerit) {
-							// Insert new active nodes for breaks from the best active node to b
-							s = new BreakPoint(breakPointIndex, classes[c].demerits, classes[c].node.line + 1, classes[c].ratio, tmpSum, classes[c].node, active);
+				if (-1 <= ratio && ratio <= tolerance) {
+					// Compute demerits and fitness class
+					badness = 100 * Math.pow(Math.abs(ratio), 3);
 
-							if (previousActive === undefined) {
-								activeFirst = s;
-							} else {
-								previousActive.link = s;
-							}
-							previousActive = s;
+					// Positive penalty
+					if (breakPoint.type === 'penalty' && breakPoint.penalty >= 0) {
+						demerits = Math.pow(1 + badness + breakPoint.penalty, 2);
+					// Negative penalty
+					} else if (breakPoint.type === 'penalty' && breakPoint.penalty !== -infinity) {
+						demerits = Math.pow(1 + badness - breakPoint.penalty, 2);
+					// All other cases
+					} else {
+						demerits = Math.pow(1 + badness, 2);
+					}
+
+					if (breakPoint.type === 'penalty' && active.type === 'penalty') {
+						demerits += flaggedDemerit * breakPoint.flagged * active.flagged;
+					}
+
+					if (ratio < -0.5) {
+						c = 0;
+					} else if (ratio <= 0.5) {
+						c = 1;
+					} else if (ratio <= 1) {
+						c = 2;
+					} else {
+						c = 3;
+					}
+
+					demerits += active.demerits;
+
+					if (demerits < classes[c].demerits) {
+						classes[c].demerits = demerits;
+						classes[c].node = active;
+						classes[c].ratio = ratio;
+						if (demerits < minimumDemerits) {
+							minimumDemerits = demerits;
 						}
 					}
 				}
+				active = nextActive;
 
-			//	if (active === undefined) {
-			//		break;
-			//	}
-			//}
+				if (active === undefined) {
+					break;
+				}
+
+				if (active !== undefined && active.line <= j && j <= lineLengths[0]) {
+					break;
+				}
+			}
+			//console.log(classes);
+			// Append the best feasible breaks as active nodes.
+			if (minimumDemerits < infinity) {
+				// Compute width, stretch and shrink sums
+				tmpSum = computeSum(list, breakPointIndex);
+
+				for (c = 0; c < 4; c += 1) {
+					if (classes[c].node !== undefined && classes[c].demerits <= minimumDemerits + flaggedDemerit) {
+						// Insert new active nodes for breaks from the best active node to b
+						s = new BreakPoint(breakPointIndex, classes[c].demerits, classes[c].node.line + 1, classes[c].ratio, tmpSum, classes[c].node, active);
+
+						if (previousActive === undefined) {
+							activeFirst = s;
+						} else {
+							previousActive.link = s;
+						}
+						previousActive = s;
+					}
+				}
+			}
 		};
 
 	if (list.isEmpty()) {
