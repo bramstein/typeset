@@ -12,6 +12,8 @@
 	</head>
 	<body>
 		<canvas id="canvas" width="350" height="300"></canvas>
+		<script type="text/javascript" src="../core/object.js"></script>
+		<script type="text/javascript" src="../core/array.js"></script>
 		<script type="text/javascript" src="../core/linked-list.js"></script>
 		<script type="text/javascript">
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything.",
@@ -32,7 +34,11 @@
 
 				words = [],
 
-				maxWidth;
+				maxWidth,
+
+				breaks = [],
+		
+				tmp;
 
 			context.textBaseline = 'top';
 			context.font = '14px times';
@@ -64,7 +70,7 @@
 					if (stretch > 0) {
 						return (maxWidth - width) / stretch;
 					} else {
-						return Infinity;
+						return 10000;
 					}
 
 				} else if (width > maxWidth) {
@@ -73,7 +79,7 @@
 					if (shrink > 0) {
 						return (maxWidth - width) / shrink;
 					} else {
-						return Infinity;
+						return 10000;
 					}
 				} else {
 					// perfect match
@@ -81,8 +87,9 @@
 				}
 			}
 
-			function BreakPoint(position, ratio, previous) {
+			function BreakPoint(position, demerits, ratio, previous) {
 				this.position = position;
+				this.demerits = demerits;
 				this.ratio = ratio;
 				this.previous = previous;
 			}
@@ -92,25 +99,55 @@
 			};
 
 			var candidates = new LinkedList();
-			var potentials = [];
 
-			candidates.append(new Node(new BreakPoint(0, 0, null)));
-
-			console.log(candidates.toString());
+			candidates.push(new LinkedList.Node(new BreakPoint(0, 0, 0, null)));
 
 
 			words.forEach(function (word, index) {
-				candidates.forEach(function (active) {
-	
-					var ratio = computeCost(active.data.position, index);
+				var active = candidates.first(),
+					next = null,
+					ratio = 0,
+					potentials = [];
+
+				while (active !== null) {
+					next = active.next;
+					ratio = computeCost(active.data.position, index);
+
+					if (ratio < -1) {
+						candidates.remove(active);
+					}
 
 					if (-1 <= ratio && ratio <= tolerance) {
-						candidates.insertAfter(active, new Node(new BreakPoint(index, ratio, active))); 
+						potentials.push(new LinkedList.Node(new BreakPoint(index, active.data.ratio + ratio, ratio, active)));
 					}
-				});
+					active = next;
+				}
+				if (!potentials.isEmpty()) {
+					var b = potentials.reduce(function (a, b) {
+						return a.demerits < b.demerits ? a : b;
+					}, {ratio: Infinity});
+					
+					candidates.push(b);
+				}
+			});
+			
+			var m = candidates.toArray().filter(function (n) {
+				return n.data.position === words.length - 1;
 			});
 
-			console.log(candidates.toString());
+			if (!m.isEmpty()) {
+				tmp = m[0];
+				while (tmp !== null) {
+					breaks.push({position: tmp.data.position, ratio: tmp.data.ratio});
+					tmp = tmp.data.previous;
+				}
+				breaks = breaks.reverse();
+
+				console.log(breaks);
+			} else {
+				console.log("Paragraph can not be set with given tolerance.");
+			}
+		
 /*
 			// So now we have a tree of potential break points, and we need to find the route with
 			// the least total costs. We start searching for possible routes at the end of the candidate
