@@ -107,18 +107,21 @@
 				var active = candidates.first(),
 					next = null,
 					ratio = 0,
+					demerits = 0,
 					potentials = [];
 
 				while (active !== null) {
 					next = active.next;
 					ratio = computeCost(active.data.position, index);
 
-					if (ratio < -1) {
+					if (ratio < -1 || index === words.length - 1) {
 						candidates.remove(active);
 					}
 
 					if (-1 <= ratio && ratio <= tolerance) {
-						potentials.push(new LinkedList.Node(new BreakPoint(index, active.data.ratio + ratio, ratio, active)));
+						demerits = Math.abs(ratio);
+	
+						potentials.push(new LinkedList.Node(new BreakPoint(index, active.data.demerits + demerits, ratio, active)));
 					}
 					active = next;
 				}
@@ -126,17 +129,14 @@
 					var b = potentials.reduce(function (a, b) {
 						return a.demerits < b.demerits ? a : b;
 					}, {ratio: Infinity});
-					
 					candidates.push(b);
 				}
 			});
-			
-			var m = candidates.toArray().filter(function (n) {
-				return n.data.position === words.length - 1;
-			});
 
-			if (!m.isEmpty()) {
-				tmp = m[0];
+			console.log(candidates.toArray());			
+
+			if (!candidates.size() !== 0) {
+				tmp = candidates.first();
 				while (tmp !== null) {
 					breaks.push({position: tmp.data.position, ratio: tmp.data.ratio});
 					tmp = tmp.data.previous;
