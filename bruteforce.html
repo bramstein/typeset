@@ -24,7 +24,7 @@
 					shrink: 1 / 9
 				},
 
-				tolerance = 1,
+				tolerance = 1.2,
 
 				c = document.getElementById('canvas'),
 
@@ -51,22 +51,27 @@
 			space.stretch *= emWidth;
 			space.shrink *= emWidth;
 
+			console.log(maxWidth);
 
 			words = text.split(/\s/);
-			console.log(space);
-			console.log(words);
 
 			function computeCost(start, end) {
-				var i, width = 0, stretch = 0, shrink = 0;
+				var i, width = 0, stretch = 0, shrink = 0, spaces = 0;
+			
 				for (i = start; i < end; i += 1) {
 					width += context.measureText(words[i]).width;
 				}
 				// add the normal space width
-				width += (end - start) * space.width;
+				if (end - start > 1) {
+					spaces = (end - start) - 1;
+				}
+
+				width += spaces * space.width;
 
 				if (width < maxWidth) {
 					// Calculate the stretch ratio
-					stretch = (end - start) * space.stretch;
+					
+					stretch = spaces * space.stretch;
 					if (stretch > 0) {
 						return (maxWidth - width) / stretch;
 					} else {
@@ -75,7 +80,7 @@
 
 				} else if (width > maxWidth) {
 					// Calculate the shrink ratio
-					shrink = (end - start) * space.shrink;
+					shrink = spaces * space.shrink;
 					if (shrink > 0) {
 						return (maxWidth - width) / shrink;
 					} else {
@@ -87,10 +92,11 @@
 				}
 			}
 
-			function BreakPoint(position, demerits, ratio, previous) {
+			function BreakPoint(position, demerits, ratio, line, previous) {
 				this.position = position;
 				this.demerits = demerits;
 				this.ratio = ratio;
+				this.line = line;
 				this.previous = previous;
 			}
 
@@ -98,9 +104,10 @@
 				return 'Position: ' + this.position + ', Ratio: ' + this.ratio;
 			};
 
-			var candidates = new LinkedList();
+			var candidates = new LinkedList(),
+				currentLine = 0, i = 0, lines = [], point, j, r, lineStart = 0, y = 4;
 
-			candidates.push(new LinkedList.Node(new BreakPoint(0, 0, 0, null)));
+			candidates.push(new LinkedList.Node(new BreakPoint(0, 0, 0, 0, null)));
 
 
 			words.forEach(function (word, index) {
@@ -108,42 +115,74 @@
 					next = null,
 					ratio = 0,
 					demerits = 0,
-					potentials = [];
+					potentials = [],
+					badness;
 
 				while (active !== null) {
 					next = active.next;
 					ratio = computeCost(active.data.position, index);
+
+					currentLine = active.data.line + 1;
 
 					if (ratio < -1 || index === words.length - 1) {
 						candidates.remove(active);
 					}
 
 					if (-1 <= ratio && ratio <= tolerance) {
-						demerits = Math.abs(ratio);
-	
-						potentials.push(new LinkedList.Node(new BreakPoint(index, active.data.demerits + demerits, ratio, active)));
+						badness = 100 * Math.pow(Math.abs(ratio), 3);
+						demerits = Math.pow(1 + badness, 2);
+
+						potentials.push(new LinkedList.Node(new BreakPoint(index, active.data.demerits + demerits, ratio, active.data.line + 1, active)));
 					}
 					active = next;
 				}
 				if (!potentials.isEmpty()) {
 					var b = potentials.reduce(function (a, b) {
-						return a.demerits < b.demerits ? a : b;
-					}, {ratio: Infinity});
+						return a.data.demerits < b.data.demerits ? a : b;
+					}, {data: {ratio: Infinity}});
 					candidates.push(b);
 				}
 			});
 
-			console.log(candidates.toArray());			
 
-			if (!candidates.size() !== 0) {
+			if (candidates.size() !== 0) {
 				tmp = candidates.first();
+
 				while (tmp !== null) {
 					breaks.push({position: tmp.data.position, ratio: tmp.data.ratio});
 					tmp = tmp.data.previous;
 				}
 				breaks = breaks.reverse();
 
-				console.log(breaks);
+				for (i = 1; i < breaks.length; i += 1) {
+
+					point = breaks[i].position,
+					r = breaks[i].ratio;
+				//	console.log(words.slice(lineStart, point));
+				//	console.log(r + ' ' + computeCost(lineStart, point) + ' ' + lineStart + ' ' + point);
+					lines.push({ratio: r, nodes: words.slice(lineStart, point), position: point});
+					lineStart = point;
+				}
+
+				console.log(lines);
+
+				lines.forEach(function (line, lineIndex) {
+					var w = space.width + line.ratio * (line.ratio < 0 ? space.shrink : space.stretch),
+						x = 0;
+
+					console.log(line.ratio);
+
+					line.nodes.forEach(function (word, index) {
+						context.fillText(word, x, y);
+						x += context.measureText(word).width;
+						if (index !== line.nodes.length - 1 && lineIndex !== lines.length -1) {
+							x += w;
+						} else if (lineIndex === lines.length - 1) {
+							x += space.width;
+						}
+					});
+					y += 21;
+				});
 			} else {
 				console.log("Paragraph can not be set with given tolerance.");
 			}
