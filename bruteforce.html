@@ -6,7 +6,7 @@
 		<link rel="stylesheet" href="main.css"/>
 		<style>		
 			canvas {
-				border: 1px solid red;
+				/*border: 1px solid rgb(220, 220, 220);*/
 			}
 		</style>
 	</head>
@@ -24,7 +24,7 @@
 					shrink: 1 / 9
 				},
 
-				tolerance = 1.2,
+				tolerance = 1,
 
 				c = document.getElementById('canvas'),
 
@@ -51,8 +51,6 @@
 			space.stretch *= emWidth;
 			space.shrink *= emWidth;
 
-			console.log(maxWidth);
-
 			words = text.split(/\s/);
 
 			function computeCost(start, end) {
@@ -66,12 +64,18 @@
 					spaces = (end - start) - 1;
 				}
 
-				width += spaces * space.width;
+				
 
+				width += spaces * space.width;
+				//console.log(width);
 				if (width < maxWidth) {
 					// Calculate the stretch ratio
 					
 					stretch = spaces * space.stretch;
+
+					if (end === words.length - 1) {
+						stretch = 10000;
+					}
 					if (stretch > 0) {
 						return (maxWidth - width) / stretch;
 					} else {
@@ -101,7 +105,7 @@
 			}
 
 			BreakPoint.prototype.toString = function () {
-				return 'Position: ' + this.position + ', Ratio: ' + this.ratio;
+				return 'Position: ' + this.position + ', Ratio: ' + this.ratio + ', Demerits: ' + this.demerits;
 			};
 
 			var candidates = new LinkedList(),
@@ -132,18 +136,19 @@
 						badness = 100 * Math.pow(Math.abs(ratio), 3);
 						demerits = Math.pow(1 + badness, 2);
 
-						potentials.push(new LinkedList.Node(new BreakPoint(index, active.data.demerits + demerits, ratio, active.data.line + 1, active)));
+						potentials.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
 					}
 					active = next;
 				}
 				if (!potentials.isEmpty()) {
 					var b = potentials.reduce(function (a, b) {
-						return a.data.demerits < b.data.demerits ? a : b;
-					}, {data: {ratio: Infinity}});
-					candidates.push(b);
+						return a.demerits < b.demerits ? a : b;
+					}, {demerits: Infinity});
+					if (b.demerits < 10000) {
+						candidates.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, b.active)));
+					}
 				}
 			});
-
 
 			if (candidates.size() !== 0) {
 				tmp = candidates.first();
@@ -158,13 +163,9 @@
 
 					point = breaks[i].position,
 					r = breaks[i].ratio;
-				//	console.log(words.slice(lineStart, point));
-				//	console.log(r + ' ' + computeCost(lineStart, point) + ' ' + lineStart + ' ' + point);
-					lines.push({ratio: r, nodes: words.slice(lineStart, point), position: point});
+					lines.push({ratio: r, nodes: words.slice(lineStart, point + 1), position: point});
 					lineStart = point;
 				}
-
-				console.log(lines);
 
 				lines.forEach(function (line, lineIndex) {
 					var w = space.width + line.ratio * (line.ratio < 0 ? space.shrink : space.stretch),
@@ -177,7 +178,7 @@
 						x += context.measureText(word).width;
 						if (index !== line.nodes.length - 1 && lineIndex !== lines.length -1) {
 							x += w;
-						} else if (lineIndex === lines.length - 1) {
+						} else if (index !== line.nodes.length - 1 && lineIndex === lines.length - 1) {
 							x += space.width;
 						}
 					});
@@ -186,47 +187,6 @@
 			} else {
 				console.log("Paragraph can not be set with given tolerance.");
 			}
-		
-/*
-			// So now we have a tree of potential break points, and we need to find the route with
-			// the least total costs. We start searching for possible routes at the end of the candidate
-			// list. If the candidate list does not contain the end of the list, this paragraph can not
-			// be set using the given tolerance parameter.
-			potentials = potentials.reverse();
-
-			var routes = potentials.filter(function (p) {
-				return p.end === words.length - 1;
-			});
-
-			totalCost = 0;
-
-			routes.forEach(function (n) {
-				function find(node) {
-					node.cost += Math.abs(node.ratio);
-					
-					if (node.start === 0) {
-						console.log(totalCost);
-						return;
-					} else {
-						// find the node(s) this one is pointing to
-						var startNodes = potentials.filter(function (p) {
-							return p.end === node.start;
-						});
-						console.log(startNodes);
-						startNodes.forEach(find);
-					}
-				}
-
-				find(n);
-			});
-			console.log(routes);
-*/
-			/*potentials.forEach(function (p) {
-				var nextPotentials = potentials.filter(function (np) {
-					return np.start === p.end;
-				});
-				console.log(nextPotentials);
-			});*/
 		</script>
 	</body>
 </html>
