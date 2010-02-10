@@ -51,6 +51,23 @@
 				});
 			};
 
+			function BreakPoint(position, demerits, ratio, line, totals, previous) {
+				this.position = position;
+				this.demerits = demerits;
+				this.ratio = ratio;
+				this.line = line;
+				this.totals = totals || {
+					width: 0,
+					stretch: 0,
+					shrink: 0
+				};
+				this.previous = previous;
+			}
+
+			BreakPoint.prototype.toString = function () {
+				return 'Position: ' + this.position + ', Ratio: ' + this.ratio + ', Demerits: ' + this.demerits;
+			};
+
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything.",
 
 				space = {
@@ -59,7 +76,7 @@
 					shrink: 1 / 9
 				},
 
-				tolerance = 4,
+				tolerance = 3,
 
 				c = document.getElementById('canvas'),
 
@@ -70,16 +87,12 @@
 				words = [],
 
 				maxWidth,
-
-				breaks = [],
-		
-				tmp,
 	
 				nodes = [],
 		
 				infinity = 10000,
 
-				align = 'left';
+				align = 'center';
 
 			context.textBaseline = 'top';
 			context.font = '14px times';
@@ -133,26 +146,10 @@
 				}
 			});
 
-			function computeCost(start, end) {
-				var i, width = 0, stretch = 0, shrink = 0;
-
-				// find the first box or non-forced penalty after the previous breakpoint.
-				for (i = start; i < nodes.length; i += 1) {
-					if (nodes[i].type === 'box' || (nodes[i].type === 'penalty' && nodes[i].penalty === -infinity)) {
-						start = i;
-						break;
-					}
-				}
-
-				for (i = start; i < end; i += 1) {
-					if (nodes[i].type === 'box') {
-						width += context.measureText(nodes[i].value).width;
-					} else if (nodes[i].type === 'glue') {
-						width += nodes[i].width;
-						stretch += nodes[i].stretch;
-						shrink += nodes[i].shrink;
-					}
-				}
+			function computeCost(start, end, active) {
+				var width = sum.width - active.totals.width,
+					stretch = 0,
+					shrink = 0;
 
 				if (nodes[end].type === 'penalty') {
 					width += nodes[end].width;
@@ -160,6 +157,8 @@
 
 				if (width < maxWidth) {
 					// Calculate the stretch ratio
+					stretch = sum.stretch - active.totals.stretch;
+
 					if (stretch > 0) {
 						return (maxWidth - width) / stretch;
 					} else {
@@ -168,6 +167,8 @@
 
 				} else if (width > maxWidth) {
 					// Calculate the shrink ratio
+					shrink = sum.shrink - active.totals.shrink;
+
 					if (shrink > 0) {
 						return (maxWidth - width) / shrink;
 					} else {
@@ -179,61 +180,104 @@
 				}
 			}
 
-			function BreakPoint(position, demerits, ratio, line, previous) {
-				this.position = position;
-				this.demerits = demerits;
-				this.ratio = ratio;
-				this.line = line;
-				this.previous = previous;
+			// Add width, stretch and shrink values from the current 
+			// break point up to the next box or forced penalty.
+			function computeSum(breakPointIndex) {
+				var result = {
+						width: sum.width,
+						stretch: sum.stretch,
+						shrink: sum.shrink
+					},
+					i = 0;
+
+				for (i = breakPointIndex; i < nodes.length; i += 1) {
+					if (nodes[i].type === 'glue') {
+						result.width += nodes[i].width;
+						result.stretch += nodes[i].stretch;
+						result.shrink += nodes[i].shrink;
+					} else if (nodes[i].type === 'box' || (nodes[i].type === 'penalty' && nodes[i].penalty === -infinity && i > breakPointIndex)) {
+						break;
+					}
+				}
+				return result;
 			}
 
-			BreakPoint.prototype.toString = function () {
-				return 'Position: ' + this.position + ', Ratio: ' + this.ratio + ', Demerits: ' + this.demerits;
-			};
+			var activeNodes = new LinkedList(),
+				sum = {
+					width: 0,
+					stretch: 0,
+					shrink: 0
+				};
 
-			var candidates = new LinkedList(),
-				currentLine = 0, i = 0, lines = [], point, j, r, lineStart = 0, y = 4;
+			activeNodes.push(new LinkedList.Node(new BreakPoint(0, 0, 0, 0, undefined, null)));
 
-			candidates.push(new LinkedList.Node(new BreakPoint(0, 0, 0, 0, null)));
-
-			nodes.forEach(function (node, index) {
-				var active = candidates.first(),
+			function mainLoop(node, index, nodes) {
+				var active = activeNodes.first(),
 					next = null,
 					ratio = 0,
 					demerits = 0,
-					potentials = [],
-					badness;
+					candidates = [],
+					badness,
+					currentLine = 0,
+					tmpSum;
 
-				if ((index > 0 && node.type === 'glue' && nodes[index - 1].type === 'box') || (node.type === 'penalty' && node.penalty !== infinity)) {
-					while (active !== null) {
-						next = active.next;
-						ratio = computeCost(active.data.position, index);
+				// Iterate through the linked list of active nodes to find new potential active nodes 
+				// and deactivate current active nodes.
+				while (active !== null) {
+					next = active.next;
+					currentLine = active.data.line + 1;
+					ratio = computeCost(active.data.position, index, active.data);
 
-						currentLine = active.data.line + 1;
-
-						if (ratio < -1 || (node.type === 'penalty' && node.penalty === -infinity)) {
-							candidates.remove(active);
-						}
-
-						if (-1 <= ratio && ratio <= tolerance) {
-							badness = 100 * Math.pow(Math.abs(ratio), 3);
-							demerits = Math.pow(1 + badness, 2);
-
-							potentials.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
-						}
-						active = next;
+					// Deactive nodes when the the distance between the current active node and the
+					// current node becomes too large (i.e. it exceeds the stretch limit and the stretch
+					// ratio becomes negative) or when the current node is a forced break (i.e. the end
+					// of the paragraph when we want to remove all active nodes, but possibly have a final
+					// candidate active node---if the paragraph can be set using the given tolerance value.)
+					if (ratio < -1 || (node.type === 'penalty' && node.penalty === -infinity)) {
+						activeNodes.remove(active);
 					}
-					if (!potentials.isEmpty()) {
-						var b = potentials.reduce(function (a, b) {
-							return a.demerits < b.demerits ? a : b;
-						}, {demerits: Infinity});
-						
-						candidates.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, b.active)));
+
+					// If the ratio is within the valid range of -1 <= ratio <= tolerance calculate the 
+					// total demerits and record a candidate active node.
+					if (-1 <= ratio && ratio <= tolerance) {
+						badness = 100 * Math.pow(Math.abs(ratio), 3);
+						demerits = Math.pow(1 + badness, 2);
+
+						candidates.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
 					}
+					active = next;
+				}
+				if (!candidates.isEmpty()) {
+					// Find the best potential break point with the least total demerits.
+					var b = candidates.reduce(function (a, b) {
+						return a.demerits < b.demerits ? a : b;
+					}, {demerits: Infinity});
+					activeNodes.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
+				}
+			}
+
+			nodes.forEach(function (node, index, nodes) {
+				if (node.type === 'box') {
+					sum.width += node.width;
+				} else if (node.type === 'glue') {
+					if (index > 0 && nodes[index - 1].type === 'box') {
+						mainLoop(node, index, nodes);
+					}
+					sum.width += node.width;
+					sum.stretch += node.stretch;
+					sum.shrink += node.shrink;
+				} else if (node.type === 'penalty' && node.penalty !== infinity) {
+					mainLoop(node, index, nodes);
 				}
 			});
-			if (candidates.size() !== 0) {
-				tmp = candidates.first();
+
+			/**
+			 * Output code
+			 */
+			if (activeNodes.size() !== 0) {
+				var i = 0, lines = [], point, j, r, lineStart = 0, y = 4, tmp, breaks = [];
+
+				tmp = activeNodes.first();
 
 				while (tmp !== null) {
 					breaks.push({position: tmp.data.position, ratio: tmp.data.ratio});
@@ -251,7 +295,6 @@
 							break;
 						}
 					}
-
 					lines.push({ratio: r, nodes: nodes.slice(lineStart, point + 1), position: point});
 					lineStart = point;
 				}
@@ -260,9 +303,6 @@
 					var x = 0;
 
 					line.nodes.forEach(function (node, index) {
-						if (lineIndex === 1) {
-							console.log(node);
-						}
 						if (node.type === 'box') {
 							context.fillText(node.value, x, y);
 							x += node.width;
