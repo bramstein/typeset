@@ -16,6 +16,41 @@
 		<script type="text/javascript" src="../core/array.js"></script>
 		<script type="text/javascript" src="../core/linked-list.js"></script>
 		<script type="text/javascript">
+			function Node(type, width, options) {
+				this.type = type || 'box';
+				this.width = width || 0;
+
+				options = options || {};
+
+				this.value = options.value || '';
+
+				this.shrink = options.shrink || 0;
+				this.stretch = options.stretch || 0;
+
+				this.penalty = options.penalty || 0;
+				this.flagged = options.flagged || 0;
+			}
+
+			Node.glue = function (width, stretch, shrink) {
+				return new Node('glue', width, {
+					'stretch': stretch,
+					'shrink': shrink
+				});
+			};
+
+			Node.box = function (width, value) {
+				return new Node('box', width, {
+					'value': value
+				});
+			};
+
+			Node.penalty = function (width, penalty, flagged) {
+				return new Node('penalty', width, {
+					'penalty': penalty,
+					'flagged': flagged
+				});
+			};
+
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything.",
 
 				space = {
@@ -24,7 +59,7 @@
 					shrink: 1 / 9
 				},
 
-				tolerance = 1,
+				tolerance = 4,
 
 				c = document.getElementById('canvas'),
 
@@ -38,7 +73,13 @@
 
 				breaks = [],
 		
-				tmp;
+				tmp,
+	
+				nodes = [],
+		
+				infinity = 10000,
+
+				align = 'left';
 
 			context.textBaseline = 'top';
 			context.font = '14px times';
@@ -52,43 +93,85 @@
 			space.shrink *= emWidth;
 
 			words = text.split(/\s/);
+	
+			if (align === 'center') {
+				nodes.push(Node.box(0, ''));
+				nodes.push(Node.glue(0, 12, 0));
+			}
+
+			words.forEach(function (word, index, array) {
+				nodes.push(Node.box(context.measureText(word).width, word));
+
+				if (align === 'justify') {
+					if (index === array.length - 1) {
+						nodes.push(Node.glue(0, infinity, 0));
+						nodes.push(Node.penalty(0, -infinity, 1)); 
+					} else {
+						nodes.push(Node.glue(space.width, space.stretch, space.shrink));
+					}
+				} else if (align === 'center') {
+					if (index === array.length - 1) {
+						nodes.push(Node.glue(0, 12, 0));
+						nodes.push(Node.penalty(0, -infinity, 0));
+					} else {
+						nodes.push(Node.glue(0, 12, 0));
+						nodes.push(Node.penalty(0, 0, 0));
+						nodes.push(Node.glue(space.width, -24, 0));
+						nodes.push(Node.box(0, ''));
+						nodes.push(Node.penalty(0, infinity, 0));
+						nodes.push(Node.glue(0, 12, 0));
+					}
+				} else if (align === 'left') {
+					if (index === array.length - 1) {
+						nodes.push(Node.glue(0, infinity, 0));
+						nodes.push(Node.penalty(0, -infinity, 1)); 
+					} else {
+						nodes.push(Node.glue(0, 12, 0));
+						nodes.push(Node.penalty(0, 0, 0));
+						nodes.push(Node.glue(space.width, -12, 0)); 
+					}
+				}
+			});
 
 			function computeCost(start, end) {
-				var i, width = 0, stretch = 0, shrink = 0, spaces = 0;
-			
+				var i, width = 0, stretch = 0, shrink = 0;
+
+				// find the first box or non-forced penalty after the previous breakpoint.
+				for (i = start; i < nodes.length; i += 1) {
+					if (nodes[i].type === 'box' || (nodes[i].type === 'penalty' && nodes[i].penalty === -infinity)) {
+						start = i;
+						break;
+					}
+				}
+
 				for (i = start; i < end; i += 1) {
-					width += context.measureText(words[i]).width;
-				}
-				// add the normal space width
-				if (end - start > 1) {
-					spaces = (end - start) - 1;
+					if (nodes[i].type === 'box') {
+						width += context.measureText(nodes[i].value).width;
+					} else if (nodes[i].type === 'glue') {
+						width += nodes[i].width;
+						stretch += nodes[i].stretch;
+						shrink += nodes[i].shrink;
+					}
 				}
 
-				
+				if (nodes[end].type === 'penalty') {
+					width += nodes[end].width;
+				}
 
-				width += spaces * space.width;
-				//console.log(width);
 				if (width < maxWidth) {
 					// Calculate the stretch ratio
-					
-					stretch = spaces * space.stretch;
-
-					if (end === words.length - 1) {
-						stretch = 10000;
-					}
 					if (stretch > 0) {
 						return (maxWidth - width) / stretch;
 					} else {
-						return 10000;
+						return infinity;
 					}
 
 				} else if (width > maxWidth) {
 					// Calculate the shrink ratio
-					shrink = spaces * space.shrink;
 					if (shrink > 0) {
 						return (maxWidth - width) / shrink;
 					} else {
-						return 10000;
+						return infinity;
 					}
 				} else {
 					// perfect match
@@ -113,8 +196,7 @@
 
 			candidates.push(new LinkedList.Node(new BreakPoint(0, 0, 0, 0, null)));
 
-
-			words.forEach(function (word, index) {
+			nodes.forEach(function (node, index) {
 				var active = candidates.first(),
 					next = null,
 					ratio = 0,
@@ -122,34 +204,34 @@
 					potentials = [],
 					badness;
 
-				while (active !== null) {
-					next = active.next;
-					ratio = computeCost(active.data.position, index);
+				if ((index > 0 && node.type === 'glue' && nodes[index - 1].type === 'box') || (node.type === 'penalty' && node.penalty !== infinity)) {
+					while (active !== null) {
+						next = active.next;
+						ratio = computeCost(active.data.position, index);
 
-					currentLine = active.data.line + 1;
+						currentLine = active.data.line + 1;
 
-					if (ratio < -1 || index === words.length - 1) {
-						candidates.remove(active);
+						if (ratio < -1 || (node.type === 'penalty' && node.penalty === -infinity)) {
+							candidates.remove(active);
+						}
+
+						if (-1 <= ratio && ratio <= tolerance) {
+							badness = 100 * Math.pow(Math.abs(ratio), 3);
+							demerits = Math.pow(1 + badness, 2);
+
+							potentials.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
+						}
+						active = next;
 					}
-
-					if (-1 <= ratio && ratio <= tolerance) {
-						badness = 100 * Math.pow(Math.abs(ratio), 3);
-						demerits = Math.pow(1 + badness, 2);
-
-						potentials.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
-					}
-					active = next;
-				}
-				if (!potentials.isEmpty()) {
-					var b = potentials.reduce(function (a, b) {
-						return a.demerits < b.demerits ? a : b;
-					}, {demerits: Infinity});
-					if (b.demerits < 10000) {
+					if (!potentials.isEmpty()) {
+						var b = potentials.reduce(function (a, b) {
+							return a.demerits < b.demerits ? a : b;
+						}, {demerits: Infinity});
+						
 						candidates.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, b.active)));
 					}
 				}
 			});
-
 			if (candidates.size() !== 0) {
 				tmp = candidates.first();
 
@@ -160,26 +242,32 @@
 				breaks = breaks.reverse();
 
 				for (i = 1; i < breaks.length; i += 1) {
-
 					point = breaks[i].position,
 					r = breaks[i].ratio;
-					lines.push({ratio: r, nodes: words.slice(lineStart, point + 1), position: point});
+
+					for (var j = lineStart; j < nodes.length; j += 1) {
+						if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -infinity)) {
+							lineStart = j;
+							break;
+						}
+					}
+
+					lines.push({ratio: r, nodes: nodes.slice(lineStart, point + 1), position: point});
 					lineStart = point;
 				}
 
 				lines.forEach(function (line, lineIndex) {
-					var w = space.width + line.ratio * (line.ratio < 0 ? space.shrink : space.stretch),
-						x = 0;
+					var x = 0;
 
-					console.log(line.ratio);
-
-					line.nodes.forEach(function (word, index) {
-						context.fillText(word, x, y);
-						x += context.measureText(word).width;
-						if (index !== line.nodes.length - 1 && lineIndex !== lines.length -1) {
-							x += w;
-						} else if (index !== line.nodes.length - 1 && lineIndex === lines.length - 1) {
-							x += space.width;
+					line.nodes.forEach(function (node, index) {
+						if (lineIndex === 1) {
+							console.log(node);
+						}
+						if (node.type === 'box') {
+							context.fillText(node.value, x, y);
+							x += node.width;
+						} else if (node.type === 'glue') {
+							x += node.width + line.ratio * (line.ratio < 0 ? node.shrink : node.stretch);
 						}
 					});
 					y += 21;
