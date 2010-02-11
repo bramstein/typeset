@@ -280,7 +280,7 @@
 						// Stop iterating through active nodes to insert new candidate active nodes in the active list
 						// before moving on to the active nodes for the next line. We can use lineLengths.length as
 						// j0 here because of the implicit assumption that the last line length will be used for 
-						// subsequent lines (unless someone fills the line lengths array with all identical values.)
+						// subsequent lines (unless someone fills the line lengths array with identical values.)
 						if (active !== null && active.data.line >= currentLine && currentLine < lineLengths.length) {
 							break;
 						}
