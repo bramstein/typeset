@@ -76,7 +76,7 @@
 					shrink: 1 / 9
 				},
 
-				tolerance = 10,
+				tolerance = 4,
 
 				c = document.getElementById('canvas'),
 
@@ -89,6 +89,10 @@
 				lineLengths = [350],	
 
 				nodes = [],
+
+				linePenalty = 10,
+
+				flaggedDemerit = 100,
 		
 				infinity = 10000,
 
@@ -252,7 +256,21 @@
 						// total demerits and record a candidate active node.
 						if (-1 <= ratio && ratio <= tolerance) {
 							badness = 100 * Math.pow(Math.abs(ratio), 3);
-							demerits = Math.pow(1 + badness, 2);
+
+							// Positive penalty
+							if (node.type === 'penalty' && node.penalty >= 0) {
+								demerits = Math.pow(linePenalty + badness + node.penalty, 2);
+							// Negative penalty but not a forced break
+							} else if (node.type === 'penalty' && node.penalty !== -infinity) {
+								demerits = Math.pow(linePenalty + badness - node.penalty, 2);
+							// All other cases
+							} else {
+								demerits = Math.pow(linePenalty + badness, 2);
+							}
+
+							if (node.type === 'penalty' && nodes[active.data.position].type === 'penalty') {
+								demerits += flaggedDemerit * node.flagged * nodes[active.data.position].flagged;
+							}
 
 							candidates.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
 						}
