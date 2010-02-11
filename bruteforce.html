@@ -6,7 +6,7 @@
 		<link rel="stylesheet" href="main.css"/>
 		<style>		
 			canvas {
-				/*border: 1px solid rgb(220, 220, 220);*/
+				border: 1px solid rgb(220, 220, 220);
 			}
 		</style>
 	</head>
@@ -76,7 +76,7 @@
 					shrink: 1 / 9
 				},
 
-				tolerance = 3,
+				tolerance = 10,
 
 				c = document.getElementById('canvas'),
 
@@ -86,13 +86,13 @@
 
 				words = [],
 
-				maxWidth,
-	
+				lineLengths = [350],	
+
 				nodes = [],
 		
 				infinity = 10000,
 
-				align = 'center';
+				align = 'justify';
 
 			context.textBaseline = 'top';
 			context.font = '14px times';
@@ -108,6 +108,8 @@
 			words = text.split(/\s/);
 	
 			if (align === 'center') {
+				// Although not specified in the Knuth and Plass whitepaper, this box is necessary
+				// to keep the glue from disappearing.
 				nodes.push(Node.box(0, ''));
 				nodes.push(Node.glue(0, 12, 0));
 			}
@@ -146,31 +148,34 @@
 				}
 			});
 
-			function computeCost(start, end, active) {
+			function computeCost(start, end, active, currentLine) {
 				var width = sum.width - active.totals.width,
 					stretch = 0,
-					shrink = 0;
+					shrink = 0,
+					// If the current line index is within the list of linelengths, use it, otherwise use
+					// the last line length of the list.
+					lineLength = currentLine < lineLengths.length ? lineLengths[currentLine - 1] : lineLengths[lineLengths.length - 1];
 
 				if (nodes[end].type === 'penalty') {
 					width += nodes[end].width;
 				}
 
-				if (width < maxWidth) {
+				if (width < lineLength) {
 					// Calculate the stretch ratio
 					stretch = sum.stretch - active.totals.stretch;
 
 					if (stretch > 0) {
-						return (maxWidth - width) / stretch;
+						return (lineLength - width) / stretch;
 					} else {
 						return infinity;
 					}
 
-				} else if (width > maxWidth) {
+				} else if (width > lineLength) {
 					// Calculate the shrink ratio
 					shrink = sum.shrink - active.totals.shrink;
 
 					if (shrink > 0) {
-						return (maxWidth - width) / shrink;
+						return (lineLength - width) / shrink;
 					} else {
 						return infinity;
 					}
@@ -221,38 +226,54 @@
 					currentLine = 0,
 					tmpSum;
 
-				// Iterate through the linked list of active nodes to find new potential active nodes 
-				// and deactivate current active nodes.
+				// The inner loop iterates through all the active nodes with line < currentLine and then
+				// breaks out to insert the new active node candidates before looking at the next active
+				// nodes for the next lines. The result of this is that the active node list is always
+				// sorted by line number.
 				while (active !== null) {
-					next = active.next;
-					currentLine = active.data.line + 1;
-					ratio = computeCost(active.data.position, index, active.data);
 
-					// Deactive nodes when the the distance between the current active node and the
-					// current node becomes too large (i.e. it exceeds the stretch limit and the stretch
-					// ratio becomes negative) or when the current node is a forced break (i.e. the end
-					// of the paragraph when we want to remove all active nodes, but possibly have a final
-					// candidate active node---if the paragraph can be set using the given tolerance value.)
-					if (ratio < -1 || (node.type === 'penalty' && node.penalty === -infinity)) {
-						activeNodes.remove(active);
+					// Iterate through the linked list of active nodes to find new potential active nodes 
+					// and deactivate current active nodes.
+					while (active !== null) {
+						next = active.next;
+						currentLine = active.data.line + 1;
+						ratio = computeCost(active.data.position, index, active.data, currentLine);
+
+						// Deactive nodes when the the distance between the current active node and the
+						// current node becomes too large (i.e. it exceeds the stretch limit and the stretch
+						// ratio becomes negative) or when the current node is a forced break (i.e. the end
+						// of the paragraph when we want to remove all active nodes, but possibly have a final
+						// candidate active node---if the paragraph can be set using the given tolerance value.)
+						if (ratio < -1 || (node.type === 'penalty' && node.penalty === -infinity)) {
+							activeNodes.remove(active);
+						}
+
+						// If the ratio is within the valid range of -1 <= ratio <= tolerance calculate the 
+						// total demerits and record a candidate active node.
+						if (-1 <= ratio && ratio <= tolerance) {
+							badness = 100 * Math.pow(Math.abs(ratio), 3);
+							demerits = Math.pow(1 + badness, 2);
+
+							candidates.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
+						}
+
+						active = next;
+
+						// Stop iterating through active nodes to insert new candidate active nodes in the active list
+						// before moving on to the active nodes for the next line. We can use lineLengths.length as
+						// j0 here because of the implicit assumption that the last line length will be used for 
+						// subsequent lines (unless someone fills the line lengths array with all identical values.)
+						if (active !== null && active.data.line >= currentLine && currentLine < lineLengths.length) {
+							break;
+						}
 					}
-
-					// If the ratio is within the valid range of -1 <= ratio <= tolerance calculate the 
-					// total demerits and record a candidate active node.
-					if (-1 <= ratio && ratio <= tolerance) {
-						badness = 100 * Math.pow(Math.abs(ratio), 3);
-						demerits = Math.pow(1 + badness, 2);
-
-						candidates.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
+					if (!candidates.isEmpty()) {
+						// Find the best potential break point with the least total demerits.
+						var b = candidates.reduce(function (a, b) {
+							return a.demerits < b.demerits ? a : b;
+						}, {demerits: Infinity});
+						activeNodes.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
 					}
-					active = next;
-				}
-				if (!candidates.isEmpty()) {
-					// Find the best potential break point with the least total demerits.
-					var b = candidates.reduce(function (a, b) {
-						return a.demerits < b.demerits ? a : b;
-					}, {demerits: Infinity});
-					activeNodes.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
 				}
 			}
 
