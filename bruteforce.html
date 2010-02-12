@@ -51,11 +51,12 @@
 				});
 			};
 
-			function BreakPoint(position, demerits, ratio, line, totals, previous) {
+			function BreakPoint(position, demerits, ratio, line, fitnessClass, totals, previous) {
 				this.position = position;
 				this.demerits = demerits;
 				this.ratio = ratio;
 				this.line = line;
+				this.fitnessClass = fitnessClass;
 				this.totals = totals || {
 					width: 0,
 					stretch: 0,
@@ -65,7 +66,7 @@
 			}
 
 			BreakPoint.prototype.toString = function () {
-				return 'Position: ' + this.position + ', Ratio: ' + this.ratio + ', Demerits: ' + this.demerits;
+				return 'Position: ' + this.position + ', Line: ' + this.line + ', Fitness: ' + this.fitnessClass + ', Ratio: ' + this.ratio + ', Demerits: ' + this.demerits;
 			};
 
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything.",
@@ -96,7 +97,9 @@
 		
 				infinity = 10000,
 
-				align = 'left';
+				fitnessDemerit = 3000,
+
+				align = 'justify';
 
 			context.textBaseline = 'top';
 			context.font = '14px times';
@@ -212,18 +215,24 @@
 			}
 
 			function inOrder(activeNodes) {
-				var line = 0,
-					position = 0,
+				var line = -1,
+					position = -1,
+					fitnessClass = -1;
 					active = activeNodes.first(),
 					inorder = true;
 				while (active !== null) {
-					if (position <= active.data.position && line <= active.data.line) {
-						position = active.data.position;
-						line = active.data.line;
+					// if the lines are different, position does not matter
+					if (line < active.data.line) {
+					// if the lines are the same, the position should be different
+					} else if (line === active.data.line && position !== active.data.position) {
+					// if the lines and position are the same the fitness classes should be different.
+					} else if (line === active.data.line && position === active.data.position && fitnessClass !== active.data.fitnessClass) {
 					} else {
-						inorder = false;
 						break;
 					}
+					position = active.data.position;
+					line = active.data.line;
+					fitnessClass = active.data.fitnessClass;
 					active = active.next;
 				}
 				return inorder;
@@ -236,7 +245,7 @@
 					shrink: 0
 				};
 
-			activeNodes.push(new LinkedList.Node(new BreakPoint(0, 0, 0, 0, undefined, null)));
+			activeNodes.push(new LinkedList.Node(new BreakPoint(0, 0, 0, 0, 0, undefined, null)));
 
 			function mainLoop(node, index, nodes) {
 				var active = activeNodes.first(),
@@ -246,13 +255,16 @@
 					candidates = [],
 					badness,
 					currentLine = 0,
-					tmpSum;
+					tmpSum,
+					currentClass = 0;
 
 				// The inner loop iterates through all the active nodes with line < currentLine and then
 				// breaks out to insert the new active node candidates before looking at the next active
 				// nodes for the next lines. The result of this is that the active node list is always
 				// sorted by line number.
 				while (active !== null) {
+
+					candidates = [{demerits: Infinity}, {demerits: Infinity}, {demerits: Infinity}, {demerits: Infinity}];
 
 					// Iterate through the linked list of active nodes to find new potential active nodes 
 					// and deactivate current active nodes.
@@ -290,32 +302,60 @@
 								demerits += flaggedDemerit * node.flagged * nodes[active.data.position].flagged;
 							}
 
-							candidates.push({active: active, demerits: active.data.demerits + demerits, ratio: ratio});
+							// Calculate the fitness class for this candidate active node.
+							if (ratio < -0.5) {
+								currentClass = 0;
+							} else if (ratio <= 0.5) {
+								currentClass = 1;
+							} else if (ratio <= 1) {
+								currentClass = 2;
+							} else {
+								currentClass = 3;
+							}
+
+							// Add a fitness penalty to the demerits if the fitness classes of two adjacent lines
+							// differ too much.
+							if (Math.abs(currentClass - active.data.fitnessClass) > 1) {
+								demerits += fitnessDemerit;
+							}
+
+							// Add the total demerits of the active node to get the total demerits of this candidate node.
+							demerits += active.data.demerits;
+
+							// Only store the best candidate for each fitness class
+							if (demerits < candidates[currentClass].demerits) {
+								candidates[currentClass] = {active: active, demerits: demerits, ratio: ratio};
+							}
 						}
 
 						active = next;
 
 						// Stop iterating through active nodes to insert new candidate active nodes in the active list
-						// before moving on to the active nodes for the next line. We can use lineLengths.length as
-						// j0 here because of the implicit assumption that the last line length will be used for 
-						// subsequent lines (unless someone fills the line lengths array with identical values.)
-						if (active !== null && active.data.line >= currentLine && currentLine < lineLengths.length) {
+						// before moving on to the active nodes for the next line.
+						// TODO: The Knuth and Plass paper suggests a conditional for currentLine < j0. This means paragraphs
+						// with identical line lengths will not be sorted by line number. Find out if that is a desirable outcome.
+						// For now I left this out, as it only adds minimal overhead to the algorithm and keeping the active node
+						// list sorted has a higher priority.
+						if (active !== null && active.data.line >= currentLine) {
 							break;
 						}
 					}
-					if (!candidates.isEmpty()) {
-						// Find the best potential break point with the least total demerits.
-						var b = candidates.reduce(function (a, b) {
-							return a.demerits < b.demerits ? a : b;
-						}, {demerits: Infinity});
-						if (active !== null) {
-							activeNodes.insertBefore(active, new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
-						} else {
-							activeNodes.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
+
+					tmpSum = computeSum(index);
+
+					candidates.forEach(function (candidate, fitnessClass) {
+						var newNode;
+
+						if (candidate.demerits < Infinity) {
+							newNode = new LinkedList.Node(new BreakPoint(index, candidate.demerits, candidate.ratio, candidate.active.data.line + 1, fitnessClass, tmpSum, candidate.active));
+							if (active !== null) {
+								activeNodes.insertBefore(active, newNode);
+							} else {
+								activeNodes.push(newNode);
+							}
+							if (!inOrder(activeNodes)) { console.log(activeNodes.toString()); }
 						}
-						
-						console.log(inOrder(activeNodes));
-					}
+					});
 				}
 			}
 
