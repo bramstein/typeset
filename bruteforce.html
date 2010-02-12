@@ -96,7 +96,7 @@
 		
 				infinity = 10000,
 
-				align = 'justify';
+				align = 'left';
 
 			context.textBaseline = 'top';
 			context.font = '14px times';
@@ -211,6 +211,24 @@
 				return result;
 			}
 
+			function inOrder(activeNodes) {
+				var line = 0,
+					position = 0,
+					active = activeNodes.first(),
+					inorder = true;
+				while (active !== null) {
+					if (position <= active.data.position && line <= active.data.line) {
+						position = active.data.position;
+						line = active.data.line;
+					} else {
+						inorder = false;
+						break;
+					}
+					active = active.next;
+				}
+				return inorder;
+			}
+
 			var activeNodes = new LinkedList(),
 				sum = {
 					width: 0,
@@ -290,7 +308,13 @@
 						var b = candidates.reduce(function (a, b) {
 							return a.demerits < b.demerits ? a : b;
 						}, {demerits: Infinity});
-						activeNodes.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
+						if (active !== null) {
+							activeNodes.insertBefore(active, new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
+						} else {
+							activeNodes.push(new LinkedList.Node(new BreakPoint(index, b.demerits, b.ratio, b.active.data.line + 1, computeSum(index), b.active)));
+						}
+						
+						console.log(inOrder(activeNodes));
 					}
 				}
 			}
