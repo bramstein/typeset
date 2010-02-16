@@ -1,54 +1,38 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta charset="utf-8">
 		<title>TypeSet</title>
 		<link rel="stylesheet" href="main.css"/>
 		<style>
 			.example {
-				overflow: auto;
-				margin-left: 25%;
+				margin: 1.35em auto;
+				text-align: center;
 			}
 
 			.example ul {
-				width: 4em;
-				float: left;
+				display: inline-block;
 				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-
-			.example ul li {
-				margin: 0;
-				padding: 0;
-				text-align: right;
-			}
-
-			.example p {
-				margin: 0;
-				padding: 0;
-			}
-
-			#browser, #browser-assisted, .example {
+				padding: 0 0 0 1.5em;				
+				margin: 0 auto 0 0;
 				font-size: 14px;
 				line-height: 21px;
 				font-family: 'times';
-				text-align: left;
 			}
-
+			
 			#browser, #browser-assisted {
+				font-size: 14px;
+				line-height: 21px;
+				font-family: 'times';
+				text-align: justify;
 				width: 350px;
-				float: left;
+				margin: 0 0 0 auto;
+				display: inline-block;
 			}
 
 			#browser-assisted {
 				text-align: left;
-			}
-
-			#canvas {
-				width: 350px;
-				height: 300px;
-				float: left;
+				margin: 0 auto;
 			}
 		</style>
 	</head>
@@ -58,9 +42,9 @@
 
 		<p>This is an implementation of the <a href="http://www3.interscience.wiley.com/journal/113445055/abstract">Knuth and Plass line breaking algorithm</a> using JavaScript and the HTML5 canvas element. The goal of this implementation is to optimally set text in the new HTML5 canvas element, and ultimately implement a rich text editor using JavaScript and HTML5 features.</p>
 		<p>The paragraph below is set using a (simplified) JavaScript implementation of the classic Knuth and Plass algorithm as used in <span class="tex">T<sub>e</sub>X</span>. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of <sup>1</sup>⁄<sub>3</sub> em width, with a stretchability and shrink-ability of <sup>1</sup>⁄<sub>6</sub> em and <sup>1</sup>⁄<sub>9</sub> em respectively.</p>
-		<div class="example"><canvas id="canvas" width="350" height="300"></canvas></div>
+		<div class="example"><canvas id="justify" width="400" height="200"></canvas></div>
 		<p>The following paragraph is set by your browser using <code>text-align: justify</code>. Notice the second and fifth line have greater inter-word spacing than the canvas version, which stretches the first line in order to minimize the inter-word spacing in later lines.</p>
-		<div class="example"><p id="browser"></p></div>
+		<div class="example"><div id="browser"></div></div>
 		<p> The browser also ends up with ten lines instead of the nine found by the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word space used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in Firefox are either identical or very similar. The next section explains how the values for your browser were calculated.</p>
 
 		<h2>Measuring the quality of browser line breaks</h2>
@@ -70,17 +54,15 @@
 
 		<h2>Assisted browser line breaks</h2>
 		<p>The following paragraph is set according to the line breaks found by the Knuth and Plass algorithm, but instead of using the HTML5 Canvas element it is rendered by your browser. By adjusting the CSS <code>word-spacing</code> property we have achieved the same paragraph as in the Canvas example.</p>
-		<div class="example"><p id="browser-assisted"></p></div>
+		<div class="example"><div id="browser-assisted"></div></div>
 		<p>Each line is wrapped in a <code>&lt;span&gt;</code> element, with the same stretchability and shrink-ability values as in the Canvas example. These values are multiplied by the stretch or shrink ratio and used as the word spacing for that line.</p>
 		<h2>Examples</h2>
 		<h3>Ragged right and centered alignment</h3>
-
+		<canvas id="left" width="350" height="220"></canvas>
+		<canvas id="center" width="350" height="220"></canvas>
 		<p>Ragged left text can be achieved by using a ragged left set text and aligning its endings with the left border.</p>
 		<h3>Variable line width</h3>
 		<p>Variable line width to flow text around illustrations, asides, quotes and the like.</p>
-
-		<h2>The algorithm</h2>
-		<p>The principle behind the Knuth and Plass line breaking algorithm is simple: given a paragraph, try to minimize the amount of whitespace at the end of each line.</p>
 
 		<h2>To-do</h2>
 		<p>The following are some extensions to the algorithm discussed in the original paper, which I intend to implement (at some point.)</p>
@@ -98,7 +80,6 @@
 				accumulated width is the same as before; and if a break does occur, the line will be
 				justified as if the period or other symbol were not present.</blockquote>
 			</li>
-			<li>The current code uses the global name-space for variables and functions, it would be good to wrap these up in a module, with a well defined API.</li>
 			<li>Test in other browsers: currently it seems to work fine with Firefox on Linux and Windows. Firefox on OSX, however performs badly (seems to be caused by strange font metrics, and bad anti-aliasing.) Also works fine with Safari on OSX.</li>
 			<li>Compare quality against line-breaking implemented by <a href="http://msdn.microsoft.com/en-us/library/ms534671%28VS.85%29.aspx">Internet Explorer's <code>text-justify</code> CSS property</a>.</li>
 			<li>Figure out how to deal with dynamic paragraphs (i.e. paragraphs being edited) as their ratios will change during editing and thus (if used with the Knuth and Plass linebreaking algorithm) visibly move around.</li>
@@ -106,7 +87,8 @@
 
 		<h2>Source code</h2>
 		<ul>
-			<li><a href="myfit.js">myfit.js</a> (main algorithm, drawing routines are in this document.)</li>
+			<li><a href="linebreak.js">linebreak.js</a> (main algorithm, drawing functions are in this document.)</li>
+			<li><a href="formatter.js">formatter.js</a> (code to turn text into node lists with appropriate glue and penalties)</li>
 		</ul>
 		<h2>References</h2>
 		<p>These are the resources I found most useful while implementing the line breaking algorithm.</p>
@@ -116,144 +98,166 @@
 			<li><a href="http://defoe.sourceforge.net/folio/knuth-plass.html">Knuth & Plass line-breaking Revisited</a></li>
 			<li><a href="http://en.wikipedia.org/w/index.php?title=Word_wrap&oldid=336270336">Wikipedia: Word wrap</a></li>
 		</ul>
+		
+
+
 		<script type="text/javascript" src="../core/object.js"></script>
 		<script type="text/javascript" src="../core/array.js"></script>
-		<script type="text/javascript" src="../core/array.extra.js"></script>
+		<script type="text/javascript" src="../core/linked-list.js"></script>
+		<script type="text/javascript" src="linebreak.js"></script>
+		<script type="text/javascript" src="formatter.js"></script>
 		<script type="text/javascript" src="../../lib/jquery-1.3.2.js"></script>
-		<script type="text/javascript" src="myfit.js"></script>
 		<script type="text/javascript">
-			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything.";
-			var defaultOptions = {
-				space: {
-					width: 1 / 3,
-					stretch: 1 / 6,
-					shrink: 1 / 9
-				},
-				tolerance: 5
-			};
+			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything."
 
 
-			var typeset = function(measureText, options) {
-				
-			};
+			function draw(context, nodes, breaks, drawRatio) {
+				var i = 0, lines = [], point, j, r, lineStart = 0, y = 4, tmp;
 
-			function setJustified(text, lineLengths, measureText, options) {
-				var em = measureText("M").width,
-					spaceWidth = options.space.width * em,
-					spaceStretch = options.space.stretch * em,
-					spaceShrink = options.space.shrink * em,
-					words = text.split(/\s/),
-					list = [],
-					type = 'center';
+				// Iterate through the line breaks, and split the nodes at the
+				// correct point.
+				for (i = 1; i < breaks.length; i += 1) {
+					point = breaks[i].position,
+					r = breaks[i].ratio;
 
-				if (type === 'center') {
-					list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
-				} else if (type === 'justify') {
-					//list.push(new Node('box', 12, {value: ''}));
-				}
-
-				words.forEach(function (value, index, array) {
-					list.push(new Node('box', measureText(value).width, {'value': value}));
-
-					if (index === array.length - 1) {
-						if (type === 'justify' || type == 'left') {
-							list.push(new Node('glue', 0, {stretch: infinity, shrink: 0}));
-							list.push(new Node('penalty', 0, {penalty: -infinity, flagged: 1})); 
-						} else if (type === 'center') {
-							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
-							list.push(new Node('penalty', 0, {penalty: -infinity, flagged: 0}));
-						}
-					} else {
-						if (type === 'justify') {
-							list.push(new Node('glue', spaceWidth, {stretch: spaceStretch, shrink: spaceShrink}));
-						} else if (type === 'left') {
-							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
-							list.push(new Node('penalty', 0, {flagged: 0, penalty: 0}));
-							list.push(new Node('glue', spaceWidth, {stretch: -12, shrink: 0}));
-						} else if (type === 'center') {
-							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
-							list.push(new Node('penalty', 0, {flagged: 0, penalty: 0}));
-							list.push(new Node('glue', spaceWidth, {stretch: -24, shrink: 0}));
-							list.push(new Node('box', 0, {value: ''}));
-							list.push(new Node('penalty', {penalty: infinity, flagged: 0}));
-							list.push(new Node('glue', 0, {stretch: 12, shrink: 0}));
+					for (var j = lineStart; j < nodes.length; j += 1) {
+						// After a line break, we skip any nodes unless they are boxes or forced breaks.
+						if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.defaults.infinity)) {
+							lineStart = j;
+							break;
 						}
 					}
-				});
-//console.log(list);
-				var breakPoints = computeBreakPoints(list, lineLengths, options),
-					lineStart = 0, r = 0, point, j = 0, i = 1, node, lines = [];
-
-				for (i = 1; i < breakPoints.length; i += 1) {
-					point = breakPoints[i].position,
-					r = breakPoints[i].ratio;
-
-					lines.push({ratio: r, nodes: [], position: point});
-					for (j = lineStart; j < point; j += 1) {
-						node = list[j];
-
-						if (node.type === 'glue') {
-							node.width = node.width + r * (r < 0 ? node.shrink : node.stretch);
-							// don't start lines with glue
-							if (!lines.peek().nodes.isEmpty()) {
-								lines.peek().nodes.push(node);
-							}
-						} else if (node.type === 'box') {
-							lines.peek().nodes.push(node);
-						} else {
-							lines.peek().nodes.push(node);
-						}
-					}
-					lineStart = point + 1;
+					lines.push({ratio: r, nodes: nodes.slice(lineStart, point + 1), position: point});
+					lineStart = point;
 				}
-				console.log(lines);
-				return lines;
-			}
 
-			function drawLines(context, lines, lineHeight) {
-				// this is here so that it aligns better with
-				// the browser drawn ratio list.
-				var y = 4;
-
-				lines.forEach(function (line) {
+				lines.forEach(function (line, lineIndex) {
 					var x = 0;
-					line.nodes.forEach(function (node) {
+
+					line.nodes.forEach(function (node, index) {
 						if (node.type === 'box') {
 							context.fillText(node.value, x, y);
 							x += node.width;
 						} else if (node.type === 'glue') {
-							x += node.width;	
+							x += node.width + line.ratio * (line.ratio < 0 ? node.shrink : node.stretch);
 						}
 					});
-					y += lineHeight;
+
+					if (drawRatio) {
+						context.textAlign = 'right';
+						context.fillText(line.ratio.toFixed(3), context.canvas.width, y);
+						context.textAlign = 'left';
+					}
+
+					y += 21;
 				});
+				return lines;
 			}
 
-			function canvasTypeset() {
-				var c = document.getElementById('canvas'),
-					context = null,
-					lines = [],
-					html = [];
+			jQuery(function ($) {
+				function align(identifier, type, lineLengths, tolerance, drawRatio) {
+					var canvas = $(identifier).get(0),
+						context = canvas.getContext && canvas.getContext('2d'),
+						format, nodes, breaks;
 
-				if (c.getContext && c.getContext('2d')) {
-					context = c.getContext('2d');
-					context.textBaseline = 'top';
-					context.font = '14px times';
+					if (context) {
+						context.textBaseline = 'top';
+						context.font = '14px times';
 
-					lines = setJustified(text, [350], function (str) { return context.measureText(str); }, defaultOptions);
-					drawLines(context, lines, 21);
+						format = formatter(function (str) {
+							return context.measureText(str).width;
+						});
+
+						nodes = format[type](text);
+
+						breaks = linebreak(nodes, lineLengths, {tolerance: tolerance});
+
+						if (!breaks.isEmpty()) {
+							return draw(context, nodes, breaks, drawRatio);
+						} else {
+							context.fillText('Paragraph can not be set with the given tolerance.', 0, 0);
+						}
+					}
+					return [];
+				}
+
+				function browserTypeset() {
+					var original = $('#browser'),
+						width = original.width(),
+						copy = original.clone(),
+						text = copy.text(),
+						lines = [],
+						ratios = [],
+						words = text.split(/\s/),
+						position = 0,
+						spaceWidth = 0,
+						spaceStretch = 0,
+						html = [];
+
+					$('body').append(copy);
+
+					// This piece of code calculates the positions of the line breaks added
+					// by the browser by adding an invisible wrapper element to each word
+					// and checking when its y-position changes.
+					words.forEach(function (word, index) {
+						var html = words.slice(0, index).append(['<span>' + word + '</span>'], words.slice(index + 1, words.length)),
+							currentPosition = 0;
+
+						copy.html(html.join(' '));
+
+						currentPosition = copy.find('span').position().top;
+
+						if (currentPosition != position) {
+							lines.push([]);
+							position = currentPosition;
+						}
+
+						lines.peek().push(word);
+					});
+
+					lines = lines.map(function (line) {
+						return line.join(' ');
+					});
+
+				
+					// We measure the width if the text is not justified and only a 
+					// single line (i.e. the optimal line length.)
+					copy.empty();
+					copy.css({width: 'auto', display: 'inline', textAlign: 'left'});
+
+					// This works under the assumption that a space is 1/3 of an em, and 
+					// the stretch value is 1/6. Although the actual browser value may be
+					// different, the assumption is valid as it is only used to compare
+					// to the ratios calculated earlier.
+					spaceWidth = copy.html('&nbsp;').width() / 2;
+
+					lines.forEach(function (line, index) {
+						// This conditional is to ensure we don't calculate the ratio
+						// for the last line as it is not justified.
+						if (index !== lines.length - 1) {
+							copy.text(line);
+							ratios.push((width - copy.width()) / ((line.split(/\s/).length - 1) * spaceWidth));
+						} else {
+							ratios.push(0);
+						}
+					});
+
+					copy.remove();
+
 
 					html.push('<ul>');
-					lines.forEach(function (line) {
+					ratios.forEach(function (ratio) {
 						html.push('<li>');
-						html.push(line.ratio.toFixed(3));
+						html.push(ratio.toFixed(3));
 						html.push('</li>');
 					});
 					html.push('</ul>');
-	
-					$('#canvas').parent().append(html.join(''));
 
-					
+					$('#browser').parent().append(html.join(''));
+				}
+
+				function browserAssist(lines) {
+
 					lines.forEach(function (l) {
 						var spaceShrink = 1 / 9 * 12,
 							spaceStretch = 1 / 6 * 12;
@@ -262,94 +266,22 @@
 						}).map(function (n) {
 							return n.value;
 						}).join(' ') + '</span>');
-						t.css({wordSpacing: (l.ratio * (l.ratio < 0 ? spaceShrink : spaceStretch)), display: 'inline-block'});
+						t.css({wordSpacing: (l.ratio * (l.ratio < 0 ? spaceShrink : spaceStretch)) - 0.01, display: 'inline-block'});
 						$('#browser-assisted').append(t);
 					});
 				}
-			}
-
-			function browserTypeset() {
-				var original = $('#browser'),
-					width = original.width(),
-					copy = original.clone(),
-					text = copy.text(),
-					lines = [],
-					ratios = [],
-					words = text.split(/\s/),
-					position = 0,
-					spaceWidth = 0,
-					spaceStretch = 0,
-					html = [];
-
-				$('body').append(copy);
-
-				// This piece of code calculates the positions of the line breaks added
-				// by the browser by adding an invisible wrapper element to each word
-				// and checking when its y-position changes.
-				words.forEach(function (word, index) {
-					var html = words.slice(0, index).append(['<span>' + word + '</span>'], words.slice(index + 1, words.length)),
-						currentPosition = 0;
-
-					copy.html(html.join(' '));
-
-					currentPosition = copy.find('span').position().top;
-
-					if (currentPosition != position) {
-						lines.push([]);
-						position = currentPosition;
-					}
-
-					lines.peek().push(word);
-				});
-
-				lines = lines.map(function (line) {
-					return line.join(' ');
-				});
-
 				
-				// We measure the width if the text is not justified and only a 
-				// single line (i.e. the optimal line length.)
-				copy.empty();
-				copy.css({width: 'auto', display: 'inline', textAlign: 'left'});
+				
+				var lines = align('#justify', 'justify', [350], 1, true);
 
-				// This works under the assumption that a space is 1/3 of an em, and 
-				// the stretch value is 1/6. Although the actual browser value may be
-				// different, the assumption is valid as it is only used to compare
-				// to the ratios calculated earlier.
-				spaceWidth = copy.html('&nbsp;').width() / 2;
-
-				lines.forEach(function (line, index) {
-					// This conditional is to ensure we don't calculate the ratio
-					// for the last line as it is not justified.
-					if (index !== lines.length - 1) {
-						copy.text(line);
-						ratios.push((width - copy.width()) / ((line.split(/\s/).length - 1) * spaceWidth));
-					} else {
-						ratios.push(0);
-					}
-				});
-
-				copy.remove();
-
-
-				html.push('<ul>');
-				ratios.forEach(function (ratio) {
-					html.push('<li>');
-					html.push(ratio.toFixed(3));
-					html.push('</li>');
-				});
-				html.push('</ul>');
-
-				$('#browser').parent().append(html.join(''));
-			}
-
-			jQuery(function ($) {
 				$('#browser').text(text);
-	
-				canvasTypeset();
 				browserTypeset();
+
+				browserAssist(lines);
+
+				align('#center', 'center', [350], 3);
+				align('#left', 'left', [350], 4);
 			});
 		</script>
 	</body>
 </html>
-

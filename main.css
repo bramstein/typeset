@@ -12,29 +12,40 @@
 }
 
 body {
+	font-size:100%;
+	line-height:1.5;
+	font-family: 'Georgia', serif;
 	width: 50%;
 	margin-left: auto;
 	margin-right: auto;
-	font-family: 'Georgia', serif;
-	font-size: 1em;
-	line-height: 150%;
 }
 
-code {
-	font-size: 1.1em;
+canvas {
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+	margin: 1.25em auto;
 }
 
 h1, h2, h3 {
+	margin-top:0;
+	margin-bottom:0;
 	font-weight: normal;
-	font-family: 'Georgia',serif;
 }
-
 h1 {
+	font-size: 1.5em;
+	padding: 1.45833em 0 0;
 	text-align: center;
 }
-
-h2, h3 {
-	margin-bottom: 0;
+h2 {
+	font-size: 1.33333em;
+	padding: 1.25em 0 0;
+}
+h3 {
+	font-size: 1.16667em;
+	padding: 1.51785em 0 0;
+	text-transform: lowercase;
+	font-variant: small-caps;
 }
 
 p sub, p sup {
@@ -49,12 +60,20 @@ p sub {
 	vertical-align: -0.5ex;
 }
 
+code {
+	font-size: 1.1em;
+}
+
+p {
+	color: rgb(30, 30, 30);
+}
+
 p.subtitle {
 	padding:0;
 	margin: 0;
 	font-family: times;
 	text-align: center;
-	margin-top: -1.5em;
+	margin-top: -0.5em;
 	margin-bottom: 2em;
 }
 
