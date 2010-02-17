@@ -11,18 +11,17 @@
  * All rights reserved.
  */
 var formatter = function (measureText, options) {
-	var emWidth = measureText('M'),
+	var spaceWidth = measureText(' '),
 		o = Object.extend({}, formatter.defaults, options);
-
-
+	//console.log(emWidth);
+	//emWidth = 12;
 
 	return {
 		center: function (text) {
 			var nodes = [],
 				words = text.split(/\s/),
-				spaceWidth = o.space.width * emWidth,
-				spaceStretch = o.space.stretch * emWidth,
-				spaceShrink = o.space.shrink * emWidth;
+				spaceStretch = (spaceWidth * o.space.width) / o.space.stretch,
+				spaceShrink = (spaceWidth * o.space.width) / o.space.shrink;
 
 			// Although not specified in the Knuth and Plass whitepaper, this box is necessary
 			// to keep the glue from disappearing.
@@ -49,9 +48,8 @@ var formatter = function (measureText, options) {
 		justify: function (text) {
 			var nodes = [],
 				words = text.split(/\s/),
-				spaceWidth = o.space.width * emWidth,
-				spaceStretch = o.space.stretch * emWidth,
-				spaceShrink = o.space.shrink * emWidth;
+				spaceStretch = (spaceWidth * o.space.width) / o.space.stretch,
+				spaceShrink = (spaceWidth * o.space.width) / o.space.shrink;
 
 			words.forEach(function (word, index, array) {
 				nodes.push(linebreak.box(measureText(word), word));
@@ -68,9 +66,8 @@ var formatter = function (measureText, options) {
 		left: function (text) {
 			var nodes = [],
 				words = text.split(/\s/),
-				spaceWidth = o.space.width * emWidth,
-				spaceStretch = o.space.stretch * emWidth,
-				spaceShrink = o.space.shrink * emWidth;
+				spaceStretch = (spaceWidth * o.space.width) / o.space.stretch,
+				spaceShrink = (spaceWidth * o.space.width) / o.space.shrink;
 
 			words.forEach(function (word, index, array) {
 				nodes.push(linebreak.box(measureText(word), word));
@@ -92,9 +89,9 @@ var formatter = function (measureText, options) {
 Object.extend(formatter, {
 	defaults: {
 		space: {
-			width: 1 / 3,
-			stretch: 1 / 6,
-			shrink: 1 / 9
+			width: 3,
+			stretch: 6,
+			shrink: 9
 		}
 	}
 });

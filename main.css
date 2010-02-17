@@ -14,10 +14,11 @@
 body {
 	font-size:100%;
 	line-height:1.5;
-	font-family: 'Georgia', serif;
+	font-family: sans-serif;
 	width: 50%;
 	margin-left: auto;
 	margin-right: auto;
+	background-color: #F9F9F4;
 }
 
 canvas {
@@ -36,6 +37,7 @@ h1 {
 	font-size: 1.5em;
 	padding: 1.45833em 0 0;
 	text-align: center;
+	font-family: serif;
 }
 h2 {
 	font-size: 1.33333em;
@@ -46,6 +48,7 @@ h3 {
 	padding: 1.51785em 0 0;
 	text-transform: lowercase;
 	font-variant: small-caps;
+	font-weight: bold;
 }
 
 p sub, p sup {
@@ -65,15 +68,13 @@ code {
 }
 
 p {
-	color: rgb(30, 30, 30);
 }
 
 p.subtitle {
 	padding:0;
 	margin: 0;
-	font-family: times;
+	font-family: sans-serif;
 	text-align: center;
-	margin-top: -0.5em;
 	margin-bottom: 2em;
 }
 
