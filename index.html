@@ -36,34 +36,34 @@
 		<p class="subtitle">Bram Stein (<a href="http://www.bramstein.com/">http://www.bramstein.com</a> - <a href="mailto:b.l.stein@gmail.com">b.l.stein@gmail.com</a>)</p>
 
 		<p>This is an implementation of the <a href="http://www3.interscience.wiley.com/journal/113445055/abstract">Knuth and Plass line breaking algorithm</a> using JavaScript and the HTML5 canvas element. The goal of this implementation is to optimally set justified text in the new HTML5 canvas element, and ultimately provide a library for various line breaking algorithms in JavaScript.</p>
-		<p>The paragraph below is set using a JavaScript implementation of the classic Knuth and Plass algorithm as used in <span class="tex">T<sub>e</sub>X</span>. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of <sup>1</sup>⁄<sub>3</sub> em width, with a stretchability and shrink-ability of <sup>1</sup>⁄<sub>6</sub> em and <sup>1</sup>⁄<sub>9</sub> em respectively.</p>
+		<p>The paragraph below is set using a JavaScript implementation of the classic Knuth and Plass algorithm as used in <span class="tex">T<sub>e</sub>X</span>. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of <sup>1</sup>⁄<sub>3</sub> em, with a stretchability and shrink-ability of <sup>1</sup>⁄<sub>6</sub> em and <sup>1</sup>⁄<sub>9</sub> em respectively.</p>
 		<div class="example"><canvas id="justify" width="400" height="190"></canvas></div>
-		<p>The following paragraph is set by your browser using <code>text-align: justify</code>. Notice lines one, two, and nine have greater inter-word spacing than the canvas version, which is successful at minimizing the inter-word spacing over all lines. Overall, the Knuth and Plass algorithm is able to set this paragraph with ratios less then one, while the browser almost reaches a ratio of three.</p>
+		<p>The following paragraph is set by your browser using <code>text-align: justify</code>. Notice the lines in the paragraph set by your browser have, on average, greater inter-word spacing than the canvas version, which is successful at minimizing the inter-word spacing over all lines.</p>
 		<div class="example"><div id="browser"></div></div>
-		<p>The browser also ends up with more text on the last line compared to the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word space used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in Firefox are either identical or very similar. The next section explains how the values for your browser were calculated.</p>
+		<p>Your browser also ends up with ten lines instead of the nine lines found by the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word space used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in most browsers are either identical or very similar. The next section explains how the ratio values for your browser were calculated.</p>
 
 		<h2>Measuring the quality of browser line breaks</h2>
 		<p>Unfortunately there is no API to retrieve the positions of the line breaks the browser inserted, so we'll have to resort to some trickery. By wrapping each word in an invisible <code>&lt;span&gt;</code> element and retrieving its <code>y</code> position we can find out when a new line starts. If the <code>y</code> position of the current word is different from the previous word we know a new line has started. This way a paragraph is split up in several individual lines.</p>
 
-		<p>The ratios are then calculated by measuring the difference between the width of each line when <code>text-align</code> is set to <code>justify</code> and when it is set to <code>right</code>. This difference is then divided by the amount of stretchability of the line: i.e. the number of spaces multiplied by the stretch parameter for spaces. Although we don't know the actual stretchability we can use <sup>1</sup>⁄<sub>6</sub> em, just like the Knuth and Plass algorithm, if we only use it for comparison.</p>
+		<p>The ratios are then calculated by measuring the difference between the width of each line when <code>text-align</code> is set to <code>justify</code> and when it is set to <code>left</code>. This difference is then divided by the amount of stretchability of the line: i.e. the number of spaces multiplied by the stretch width for spaces. Although we don't know the actual stretchability we can use <sup>1</sup>⁄<sub>6</sub> em, just like the Knuth and Plass algorithm, if we only use it for comparison.</p>
 
 		<h2>Examples</h2>
-		<p>The line breaking algorithm is not only capable of justifying text, it can perform all sorts of alignment with an appropriate selection of boxes, glues and penalties. It is also possible to give it varying line widths to flow the text around illustrations, asides or quotes. Alternatively, varying line widths can be used to create interesting text shapes as demonstrated below.</p>
+		<p>The line breaking algorithm is not only capable of justifying text, it can perform all sorts of alignment with an appropriate selection of boxes, glue and penalties. It is also possible to give it varying line widths to flow text around illustrations, asides or quotes. Alternatively, varying line widths can be used to create interesting text shapes as demonstrated below.</p>
 		<h3>Ragged right and centered alignment</h3>
-		<p>The following example is set ragged right. Ragged right is not simply justified text without variable inter-word spacing. Instead the algorithm tries to minimize the amount of white space at the end of each sentence over the whole paragraph. It also attempts to reduce the number of words that are "sticking out" of the margin. It is very noticeable here that hyphenation could improve the ragged right setting greatly.</p>
+		<p>The following example is set ragged right. Ragged right is not simply justified text with fixed width inter-word spacing. Instead the algorithm tries to minimize the amount of white space at the end of each sentence over the whole paragraph. It also attempts to reduce the number of words that are "sticking out" of the margin. It is very noticeable here that hyphenation could improve the ragged right setting greatly by, for example, hyphenating the word "lime-tree".</p>
 		<canvas id="left" width="350" height="210"></canvas>
-		<p>Ragged left text can be achieved by using a ragged left set text and aligning its line endings with the left border. The example below is set centered. Again this is not simply a centering of justified text, but instead an attempt at minimizing the line lengths over the whole paragraph.</p> 
+		<p>Ragged left text can be achieved by using a ragged right text and aligning its line endings with the left border. The example below is set centered. Again this is not simply a centering of justified text, but instead an attempt at minimizing the line lengths over the whole paragraph.</p> 
 		<canvas id="center" width="350" height="210"></canvas>
 		<h3>Variable line width</h3>
-		<p>By varying the line width for a paragraph it is possible to flow the text around illustrations, asides, quotes and such. The example below leaves a gap for an illustration by setting the line widths temporarily shorter and then reverting it.</p>
+		<p>By varying the line width for a paragraph it is possible to flow the text around illustrations, asides, quotes and such. The example below leaves a gap for an illustration by setting the line widths temporarily shorter and then reverting.</p>
 		<canvas id="flow" width="350" height="260"></canvas>
-		<p>It is also possible to make some non-rectangular shapes, as shown in the example below. This text is laid out using an increasing line width resulting in a triangle outline. Here it also becomes obvious that hyphenation is needed to avoid the large inter-word spaces in the second and third line.</p>
+		<p>It is also possible to make some non-rectangular shapes, as shown in the example below. This text is laid out using an increasing line width and center aligning each line. Here it also becomes obvious that hyphenation is needed to avoid the large inter-word spaces in the second and third lines.</p>
 		<canvas id="triangle" width="600" height="240"></canvas>
 		<h2>To-do</h2>
 		<p>The following are some extensions to the algorithm discussed in the original paper, which I intend to implement (at some point.)</p>
 		<ul>
-			<li>Hyphenation using <a href="http://www.tug.org/docs/liang/">Frank Liang's algorithm</a>. This will also improve the quality of the line breaks as it introduces more potential line breaks in a paragraph.</li>
-			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. A quote from the original Knuth and Plass paper explains how to implement it: 
+			<li>Hyphenation using <a href="http://www.tug.org/docs/liang/">Frank Liang's algorithm</a>. This will improve the quality of the line breaks as it introduces more potential line breaks in a paragraph.</li>
+			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. The following quote from the original paper explains how to implement it using the box, glue and penalty model: 
 
 				<blockquote>Some people prefer to have the right edge of their text look ‘solid’, by setting periods,
 				commas, and other punctuation marks (including inserted hyphens) in the right-hand
@@ -75,7 +75,7 @@
 				accumulated width is the same as before; and if a break does occur, the line will be
 				justified as if the period or other symbol were not present.</blockquote>
 			</li>
-			<li>Test in other browsers: currently it seems to work fine with Firefox on Linux and Windows. Firefox on OSX, however performs badly (seems to be caused by strange font metrics, and bad anti-aliasing.) Also works fine with Safari on OSX.</li>
+			<li>Test in more browsers. Currently working are: Firefox/Linux, Firefox/Windows, Safari/OSX, Safari/Windows, Chrome/Linux and Chrome/Windows. Firefox on OSX, however doesn't perform as well due to different default fonts (or font sizes.)</li>
 			<li>Compare quality against line-breaking implemented by <a href="http://msdn.microsoft.com/en-us/library/ms534671%28VS.85%29.aspx">Internet Explorer's <code>text-justify</code> CSS property</a>.</li>
 			<li>Figure out how to deal with dynamic paragraphs (i.e. paragraphs being edited) as their ratios will change during editing and thus visibly move around.</li>
 		</ul>
@@ -91,7 +91,7 @@
 			<li><a href="http://www.amazon.com/Digital-Typography-Center-Language-Information/dp/1575860104/">Digital Typography, Donald E. Knuth</a></li>
 			<li><a href="http://www3.interscience.wiley.com/journal/113445055/abstract">Breaking paragraphs into lines, Donald E. Knuth, Michael F. Plass</a></li>
 			<li><a href="http://defoe.sourceforge.net/folio/knuth-plass.html">Knuth & Plass line-breaking Revisited</a></li>
-			<li><a href="http://en.wikipedia.org/w/index.php?title=Word_wrap&oldid=336270336">Wikipedia: Word wrap</a></li>
+			<li><a href="http://en.wikipedia.org/w/index.php?title=Word_wrap">Wikipedia: Word wrap</a></li>
 		</ul>
 		
 		<span style="font-family: sans-serif; font-size: 12px;" id="test">&nbsp;</span>
@@ -181,11 +181,11 @@
 					return [];
 				}
 
-				align('#justify', 'justify', [350], 1, true);
+				align('#justify', 'justify', [350], 3, true);
 				align('#center', 'center', [350], 3);
 				align('#left', 'left', [350], 4);
 				align('#flow', 'justify', [350, 350, 350, 200, 200, 200, 200, 200, 200, 200, 350, 350], 3);
-				align('#triangle', 'justify',  [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550], 20, false, true);
+				align('#triangle', 'justify',  [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550], 25, false, true);
 			});
 		</script>
 
