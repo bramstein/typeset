@@ -15,17 +15,17 @@
 				list-style-type: none;
 				padding: 0 0 0 1.5em;				
 				margin: 0 auto 0 0;
-				font-size: 12px;
-				line-height: 18px;
-				font-family: sans-serif;
+				font-size: 14px;
+				line-height: 21px;
+				font-family: 'times new roman', 'FreeSerif', serif;
 			}
 			
 			#browser {
-				font-size: 12px;
-				line-height: 18px;
-				font-family: sans-serif;
+				font-size: 14px;
+				line-height: 21px;
+				font-family: 'times new roman', 'FreeSerif', serif;
 				text-align: justify;
-				width: 310px;
+				width: 350px;
 				margin: 0 0 0 auto;
 				display: inline-block;
 			}
@@ -37,7 +37,7 @@
 
 		<p>This is an implementation of the <a href="http://www3.interscience.wiley.com/journal/113445055/abstract">Knuth and Plass line breaking algorithm</a> using JavaScript and the HTML5 canvas element. The goal of this implementation is to optimally set justified text in the new HTML5 canvas element, and ultimately provide a library for various line breaking algorithms in JavaScript.</p>
 		<p>The paragraph below is set using a JavaScript implementation of the classic Knuth and Plass algorithm as used in <span class="tex">T<sub>e</sub>X</span>. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of <sup>1</sup>⁄<sub>3</sub> em width, with a stretchability and shrink-ability of <sup>1</sup>⁄<sub>6</sub> em and <sup>1</sup>⁄<sub>9</sub> em respectively.</p>
-		<div class="example"><canvas id="justify" width="365" height="216"></canvas></div>
+		<div class="example"><canvas id="justify" width="400" height="190"></canvas></div>
 		<p>The following paragraph is set by your browser using <code>text-align: justify</code>. Notice lines one, two, and nine have greater inter-word spacing than the canvas version, which is successful at minimizing the inter-word spacing over all lines. Overall, the Knuth and Plass algorithm is able to set this paragraph with ratios less then one, while the browser almost reaches a ratio of three.</p>
 		<div class="example"><div id="browser"></div></div>
 		<p>The browser also ends up with more text on the last line compared to the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word space used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in Firefox are either identical or very similar. The next section explains how the values for your browser were calculated.</p>
@@ -51,14 +51,14 @@
 		<p>The line breaking algorithm is not only capable of justifying text, it can perform all sorts of alignment with an appropriate selection of boxes, glues and penalties. It is also possible to give it varying line widths to flow the text around illustrations, asides or quotes. Alternatively, varying line widths can be used to create interesting text shapes as demonstrated below.</p>
 		<h3>Ragged right and centered alignment</h3>
 		<p>The following example is set ragged right. Ragged right is not simply justified text without variable inter-word spacing. Instead the algorithm tries to minimize the amount of white space at the end of each sentence over the whole paragraph. It also attempts to reduce the number of words that are "sticking out" of the margin. It is very noticeable here that hyphenation could improve the ragged right setting greatly.</p>
-		<canvas id="left" width="350" height="220"></canvas>
+		<canvas id="left" width="350" height="210"></canvas>
 		<p>Ragged left text can be achieved by using a ragged left set text and aligning its line endings with the left border. The example below is set centered. Again this is not simply a centering of justified text, but instead an attempt at minimizing the line lengths over the whole paragraph.</p> 
-		<canvas id="center" width="350" height="220"></canvas>
+		<canvas id="center" width="350" height="210"></canvas>
 		<h3>Variable line width</h3>
 		<p>By varying the line width for a paragraph it is possible to flow the text around illustrations, asides, quotes and such. The example below leaves a gap for an illustration by setting the line widths temporarily shorter and then reverting it.</p>
-		<canvas id="flow" width="350" height="240"></canvas>
-		<p>It is also possible to make some non-rectangular shapes, as shown in the example below. This text is laid out using an increasing line width resulting in a triangle outline. Here it also becomes obvious that hyphenation is needed to avoid the large inter-word spaces in the third and fourth line.</p>
-		<canvas id="circle" width="450" height="310"></canvas>
+		<canvas id="flow" width="350" height="260"></canvas>
+		<p>It is also possible to make some non-rectangular shapes, as shown in the example below. This text is laid out using an increasing line width resulting in a triangle outline. Here it also becomes obvious that hyphenation is needed to avoid the large inter-word spaces in the second and third line.</p>
+		<canvas id="triangle" width="600" height="240"></canvas>
 		<h2>To-do</h2>
 		<p>The following are some extensions to the algorithm discussed in the original paper, which I intend to implement (at some point.)</p>
 		<ul>
@@ -149,7 +149,7 @@
 						context.textAlign = 'left';
 					}
 
-					y += 18;
+					y += 21;
 				});
 				return lines;
 			}
@@ -162,7 +162,7 @@
 
 					if (context) {
 						context.textBaseline = 'top';
-						context.font = "12px sans-serif";
+						context.font = "14px 'times new roman', 'FreeSerif', serif";
 
 						format = formatter(function (str) {
 							return context.measureText(str).width;
@@ -177,16 +177,15 @@
 						} else {
 							context.fillText('Paragraph can not be set with the given tolerance.', 0, 0);
 						}
-						console.log(context.measureText('M').width);
 					}
 					return [];
 				}
 
-				align('#justify', 'justify', [310], 1, true);
+				align('#justify', 'justify', [350], 1, true);
 				align('#center', 'center', [350], 3);
 				align('#left', 'left', [350], 4);
-				align('#flow', 'justify', [350, 350, 350, 200, 200, 200, 200, 200, 200, 200, 350, 350], 2);
-				align('#circle', 'justify', [50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 470, 490], 20, false, true);
+				align('#flow', 'justify', [350, 350, 350, 200, 200, 200, 200, 200, 200, 200, 350, 350], 3);
+				align('#triangle', 'justify',  [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550], 20, false, true);
 			});
 		</script>
 
