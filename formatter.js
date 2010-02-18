@@ -13,8 +13,6 @@
 var formatter = function (measureText, options) {
 	var spaceWidth = measureText(' '),
 		o = Object.extend({}, formatter.defaults, options);
-	//console.log(emWidth);
-	//emWidth = 12;
 
 	return {
 		center: function (text) {
