@@ -112,7 +112,10 @@ var linebreak = function (nodes, lines, settings) {
 			badness,
 			currentLine = 0,
 			tmpSum,
-			currentClass = 0;
+			currentClass = 0,
+			fitnessClass,
+			candidate,
+			newNode;
 
 		// The inner loop iterates through all the active nodes with line < currentLine and then
 		// breaks out to insert the new active node candidates before looking at the next active
@@ -199,9 +202,9 @@ var linebreak = function (nodes, lines, settings) {
 
 			tmpSum = computeSum(index);
 
-			candidates.forEach(function (candidate, fitnessClass) {
-				var newNode;
-
+			for (fitnessClass = 0; fitnessClass < candidates.length; fitnessClass += 1) {
+				candidate = candidates[fitnessClass];
+				
 				if (candidate.demerits < Infinity) {
 					newNode = new LinkedList.Node(breakpoint(index, candidate.demerits, candidate.ratio, 
 													candidate.active.data.line + 1, fitnessClass, tmpSum, candidate.active));
@@ -211,7 +214,7 @@ var linebreak = function (nodes, lines, settings) {
 						activeNodes.push(newNode);
 					}
 				}
-			});
+			}
 		}
 	}
 
