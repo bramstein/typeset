@@ -3,8 +3,8 @@
 /*requires ../core/array.js*/
 /*requires ../core/linked-list.js*/
 
-/*!
- * Knuth and Plass line breaking algorithm in JavaScript
+/**
+ * @preserve Knuth and Plass line breaking algorithm in JavaScript
  *
  * Licensed under the new BSD License.
  * Copyright 2009-2010, Bram Stein
