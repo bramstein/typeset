@@ -10,24 +10,28 @@
 				text-align: center;
 			}
 
+			.example {
+				font-family: 'times new roman', 'FreeSerif', serif;
+				font-size: 14px;
+				line-height: 21px;
+			}
+
 			.example ul {
 				display: inline-block;
 				list-style-type: none;
 				padding: 0 0 0 1.5em;				
 				margin: 0 auto 0 0;
-				font-size: 14px;
-				line-height: 21px;
-				font-family: 'times new roman', 'FreeSerif', serif;
+				text-align: right;
 			}
-			
-			#browser {
-				font-size: 14px;
-				line-height: 21px;
-				font-family: 'times new roman', 'FreeSerif', serif;
+
+			#browser, #browser-assist {
 				text-align: justify;
 				width: 350px;
 				margin: 0 0 0 auto;
 				display: inline-block;
+				font-family: 'times new roman', 'FreeSerif', serif;
+				font-size: 14px;
+				line-height: 21px;
 			}
 		</style>
 	</head>
@@ -46,6 +50,11 @@
 		<p>Unfortunately there is no API to retrieve the positions of the line breaks the browser inserted, so we'll have to resort to some trickery. By wrapping each word in an invisible <code>&lt;span&gt;</code> element and retrieving its <code>y</code> position we can find out when a new line starts. If the <code>y</code> position of the current word is different from the previous word we know a new line has started. This way a paragraph is split up in several individual lines.</p>
 
 		<p>The ratios are then calculated by measuring the difference between the width of each line when <code>text-align</code> is set to <code>justify</code> and when it is set to <code>left</code>. This difference is then divided by the amount of stretchability of the line: i.e. the number of spaces multiplied by the stretch width for spaces. Although we don't know the actual stretchability we can use <sup>1</sup>⁄<sub>6</sub> em, just like the Knuth and Plass algorithm, if we only use it for comparison.</p>
+
+
+		<h2>Assisted browser line breaks</h2>
+		<p>The following paragraph is set according to the line breaks found by the Knuth and Plass algorithm, but instead of using the HTML5 Canvas element it is rendered by your browser. By adjusting the CSS <code>word-spacing</code> property we have achieved the same paragraph as in the Canvas example.</p>
+		<div class="example"><div id="browser-assist" style="white-space: normal;"></div></div>
 
 		<h2>Examples</h2>
 		<p>The line breaking algorithm is not only capable of justifying text, it can perform all sorts of alignment with an appropriate selection of boxes, glue and penalties. It is also possible to give it varying line widths to flow text around illustrations, asides or quotes. Alternatively, varying line widths can be used to create interesting text shapes as demonstrated below.</p>
@@ -103,6 +112,7 @@
 		<script type="text/javascript" src="linebreak.js"></script>
 		<script type="text/javascript" src="formatter.js"></script>
 		<script type="text/javascript" src="browser.js"></script>
+		<script type="text/javascript" src="browser-assist.js"></script>
 		<script type="text/javascript">
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything."
 
