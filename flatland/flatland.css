@@ -1,0 +1,111 @@
+
+body {
+	font-size: 18px;
+	line-height: 145%;
+}
+
+
+#intro {
+	margin: 10em 5em 5em 5em;
+	width: 18em;
+	float: right;
+	font-family: 'Verdana';
+	font-size: 12pt;
+}
+
+#intro h1, #intro h2 {
+	font-size: 15pt;
+	text-transform: none;
+	font-family: 'Verdana';
+	text-align: left;
+	letter-spacing: 0em;
+	font-style: normal;
+}
+
+#intro h2 {
+	font-size: 13pt;
+}
+
+#intro p, #intro li {
+	text-indent: 0;
+	font-family: 'Verdana';
+	font-size: 11pt;
+	line-height: 150%;
+	margin: 0.5em 0;
+}
+
+#plain {
+	width: 26em;
+	text-align: justify;
+	margin: 5em;
+	float: left;
+}
+
+#typeset {
+	width: 26em;
+	text-align: justify;
+	margin: 5em;
+	float: left;
+}
+
+h1 {
+	font-style: italic;
+	text-align: center;
+	text-transform: uppercase;
+	font-weight: normal;
+	font-family: 'Droid Serif', serif;
+	letter-spacing: 0.05em;
+}
+
+h2 {
+	text-align: center;
+	font-weight: normal;
+	font-family: 'Droid Serif', serif;
+	font-size: 18pt;
+	letter-spacing: 0.05em;
+}
+
+h3 {
+	text-align: center;
+	font-size: 14pt;
+	font-weight: normal;
+	font-family: 'Droid Serif', serif;
+	letter-spacing: 0.02em;
+	margin-top: 2em;
+}
+
+h3 span {
+	font-style: italic;
+	font-family: 'Droid Serif', serif;
+	letter-spacing: 0.01em;
+	word-spacing: 0.106em;
+	line-height: 1.17em;
+}
+
+hr {
+	margin-top: 2em;
+	width: 6em;
+}
+
+img {
+	float: right;
+	margin: 1.5em 0em 1.5em 1.5em;
+}
+
+.intro {
+	font-variant: small-caps;
+}
+
+p, .ruler {
+	padding: 0;
+	margin: 0;
+	text-indent: 30px;
+	font-family: 'OFL Sorts Mill Goudy TT', serif;
+	font-size: 16pt;
+	letter-spacing: -0.01em;
+	line-height: 1.16em;
+}
+
+#typeset p, .ruler {
+	text-indent: 0;
+}
