@@ -9,7 +9,7 @@
 	<body>
 		<div id="info">
 			<h1>TeX Hyphenation &amp; Justification on the Web</h1>
-			<p>This text has been set using <a href="http://www.bramstein.com/projects/typeset/">Typeset</a> as an implementation of the Knuth and Plass line breaking algorithm. Uses <a href="http://code.google.com/p/hyphenator/">Hyphenator.js</a> for hyphenation. Text and images are from <a href="http://books.google.com/books?vid=0PO8Zb8GuSvhGZx2&id=u8HOxy7lQYUC&printsec=titlepage">Edwin Abbott's Flatland</a>.</p>
+			<p>This text has been set using <a href="http://www.bramstein.com/projects/typeset/">Typeset</a> as an implementation of the Knuth and Plass line breaking algorithm. Uses <a href="https://github.com/bramstein/Hypher/">Hypher</a> for hyphenation. Text and images are from <a href="http://books.google.com/books?vid=0PO8Zb8GuSvhGZx2&id=u8HOxy7lQYUC&printsec=titlepage">Edwin Abbott's Flatland</a>.</p>
 		</div>
 		<div id="typeset">
 			<div class="section">
@@ -61,8 +61,8 @@
 		<script type="text/javascript" src="../../lib/object.js"></script>
 		<script type="text/javascript" src="../../src/linked-list.js"></script>
 		<script type="text/javascript" src="../../src/linebreak.js"></script>
-		<script type="text/javascript" src="Hyphenator.js"></script>
-		<script type="text/javascript" src="en-us.js"></script>
+		<script type="text/javascript" src="../../lib/Hypher.js"></script>
+		<script type="text/javascript" src="../../lib/en-us.js"></script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 		<script type="text/javascript">
 			jQuery(function ($) {
@@ -70,6 +70,7 @@
 					lineHeight = 0,
 					lineLengths = [],
 					tmp, ruler,
+                    h = new Hypher(Hypher.en),
 					cache = {};
 
 				function measureString(str) {
@@ -133,7 +134,7 @@
 							words.forEach(function (word, index, array) {
 								var hyphenated = [];
 								if (word.length > 6) {
-									hyphenated = Hyphenator.hyphenate(word, 'en').split('\u00AD');
+									hyphenated = h.hyphenate(word, 'en');
 								}
 
 								if (hyphenated.length > 1) {
