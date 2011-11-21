@@ -18,8 +18,11 @@ jQuery(function ($) {
 		// by the browser by adding an invisible wrapper element to each word
 		// and checking when its y-position changes.
 		words.forEach(function (word, index) {
-			var html = words.slice(0, index).append(['<span>' + word + '</span>'], words.slice(index + 1, words.length)),
+            var html = words.slice(0, index),
 				currentPosition = 0;
+
+            html.push('<span>' + word + '</span>');
+            Array.prototype.push.apply(html, words.slice(index + 1, words.length));
 
 			copy.html(html.join(' '));
 
@@ -30,7 +33,7 @@ jQuery(function ($) {
 				position = currentPosition;
 			}
 
-			lines.peek().push(word);
+			lines[lines.length - 1].push(word);
 		});
 
 		lines = lines.map(function (line) {

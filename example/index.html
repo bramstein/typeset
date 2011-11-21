@@ -112,8 +112,7 @@
 
 		<script type="text/javascript" src="../lib/jquery-1.4.2.js"></script>
 		<script type="text/javascript" src="../lib/object.js"></script>
-		<script type="text/javascript" src="../lib/array.js"></script>
-		<script type="text/javascript" src="../src/linked-list.js"></script>
+        <script type="text/javascript" src="../src/linked-list.js"></script>
 		<script type="text/javascript" src="../src/linebreak.js"></script>
 		<script type="text/javascript" src="../src/formatter.js"></script>
 		<script type="text/javascript" src="../src/browser.js"></script>
@@ -187,7 +186,7 @@
 
 						breaks = linebreak(nodes, lineLengths, {tolerance: tolerance});
 
-						if (!breaks.isEmpty()) {
+						if (breaks.length !== 0) {
 							return draw(context, nodes, breaks, lineLengths, drawRatio, center);
 						} else {
 							context.fillText('Paragraph can not be set with the given tolerance.', 0, 0);
