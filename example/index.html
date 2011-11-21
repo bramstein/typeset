@@ -91,28 +91,33 @@
 
 		<h2>Source code</h2>
 		<ul>
-			<li><a href="linebreak.js">linebreak.js</a> (main algorithm, drawing functions are in this document.)</li>
-			<li><a href="formatter.js">formatter.js</a> (code to turn text into node lists with appropriate glue and penalties)</li>
+			<li><a href="../src/linebreak.js">linebreak.js</a> (main algorithm, drawing functions are in this document.)</li>
+			<li><a href="../src/formatter.js">formatter.js</a> (code to turn text into node lists with appropriate glue and penalties)</li>
 		</ul>
 		<h2>References</h2>
 		<p>These are the resources I found most useful while implementing the line breaking algorithm.</p>
 		<ul>
 			<li><a href="http://www.amazon.com/Digital-Typography-Center-Language-Information/dp/1575860104/">Digital Typography, Donald E. Knuth</a></li>
 			<li><a href="http://www3.interscience.wiley.com/journal/113445055/abstract">Breaking paragraphs into lines, Donald E. Knuth, Michael F. Plass</a></li>
-			<li><a href="http://defoe.sourceforge.net/folio/knuth-plass.html">Knuth & Plass line-breaking Revisited</a></li>
+			<li><a href="http://defoe.sourceforge.net/folio/knuth-plass.html">Knuth &amp; Plass line-breaking Revisited</a></li>
 			<li><a href="http://en.wikipedia.org/w/index.php?title=Word_wrap">Wikipedia: Word wrap</a></li>
 		</ul>
 		
+        <h2>Translations</h2>
+        <ul>
+            <li><a href="http://webhostingrating.com/libs/typeset-be">Belorussian translation</a></li>
+        </ul>
+
 		<span style="font-family: sans-serif; font-size: 12px;" id="test">&nbsp;</span>
 
-		<script type="text/javascript" src="../../lib/jquery-1.4.2.js"></script>
-		<script type="text/javascript" src="../core/object.js"></script>
-		<script type="text/javascript" src="../core/array.js"></script>
-		<script type="text/javascript" src="../core/linked-list.js"></script>
-		<script type="text/javascript" src="linebreak.js"></script>
-		<script type="text/javascript" src="formatter.js"></script>
-		<script type="text/javascript" src="browser.js"></script>
-		<script type="text/javascript" src="browser-assist.js"></script>
+		<script type="text/javascript" src="../lib/jquery-1.4.2.js"></script>
+		<script type="text/javascript" src="../lib/object.js"></script>
+		<script type="text/javascript" src="../lib/array.js"></script>
+		<script type="text/javascript" src="../src/linked-list.js"></script>
+		<script type="text/javascript" src="../src/linebreak.js"></script>
+		<script type="text/javascript" src="../src/formatter.js"></script>
+		<script type="text/javascript" src="../src/browser.js"></script>
+		<script type="text/javascript" src="../src/browser-assist.js"></script>
 		<script type="text/javascript">
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything."
 
