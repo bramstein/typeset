@@ -1,0 +1,85 @@
+body {
+	font-size: 100%;
+	line-height: 1.45em;
+	background-color: rgb(180, 180, 180);
+	padding: 0;
+	margin: 0;
+	font-family: "Minion Pro", Gentium, "Gentium Basic", "Hoefler Text", Constantia, "Palatino Linotype", Georgia, serif;
+}
+
+#info {
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 0.85em;
+	right: 0;
+	position: absolute;
+	background-color: rgb(40, 40, 40);
+	color: rgb(240, 240, 240);
+	padding: 1.5em 2.5em;
+	margin: 1em;
+	width: 15em;
+	line-height: 1.4em;
+}
+
+#info h1 {
+	font-size: 1em;
+	font-weight: bold;
+}
+
+#info p {
+	font-size: 0.88em;
+	line-height: 1.4em;
+}
+
+#info p a {
+	color: rgb(240, 0, 0);
+}
+
+#typeset h1 {
+	font-size: 1.5em;
+	font-style: italic;
+	text-align: center;
+	font-weight: normal;
+	text-transform: uppercase;
+}
+#typeset h2 {
+	font-size: 1.33333em;
+	text-align: center;
+	font-weight: normal;
+}
+
+#typeset h3 {
+	font-size: 1.16667em;
+	text-align: center;
+	font-weight: normal;
+	margin-top: 2em;
+}
+
+#typeset h3 span {
+	font-style: italic;
+}
+
+#typeset {
+	width: 34em;
+	padding: 8em;
+	padding-top: 2.5em;
+	background-color: white;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#typeset hr {
+	margin-top: 2em;
+	width: 6em;
+}
+
+#typeset img {
+	float: right;
+	margin: 1.5em 0em 1.5em 1.5em;
+}
+
+#typeset p {
+	padding: 0;
+	margin: 0;
+/*	outline: 1px solid red;*/
+	text-align: left;
+}
