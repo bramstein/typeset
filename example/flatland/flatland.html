@@ -149,8 +149,8 @@
 								}
 	
 								if (index === array.length - 1) {
-									nodes.push(linebreak.glue(0, linebreak.defaults.infinity, 0));
-									nodes.push(linebreak.penalty(0, -linebreak.defaults.infinity, 1)); 
+									nodes.push(linebreak.glue(0, linebreak.infinity, 0));
+									nodes.push(linebreak.penalty(0, -linebreak.infinity, 1)); 
 								} else {
 									nodes.push(linebreak.glue(space.width, space.stretch, space.shrink));
 								}
@@ -175,7 +175,7 @@
 
 								for (var j = lineStart; j < nodes.length; j += 1) {
 									// After a line break, we skip any nodes unless they are boxes or forced breaks.
-									if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.defaults.infinity)) {
+									if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.infinity)) {
 										lineStart = j;
 										break;
 									}

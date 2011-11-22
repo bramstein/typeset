@@ -12,7 +12,13 @@
  */
 var formatter = function (measureText, options) {
 	var spaceWidth = measureText(' '),
-		o = Object.extend({}, formatter.defaults, options);
+		o = {
+            space: {
+                width: options && options.space.width || 3,
+                stretch: options && options.space.stretch || 6,
+                shrink: options && options.space.shrink || 9
+            }
+        };
 
 	return {
 		center: function (text) {
@@ -31,13 +37,13 @@ var formatter = function (measureText, options) {
 
 				if (index === array.length - 1) {
 					nodes.push(linebreak.glue(0, 12, 0));
-					nodes.push(linebreak.penalty(0, -linebreak.defaults.infinity, 0));
+					nodes.push(linebreak.penalty(0, -linebreak.infinity, 0));
 				} else {
 					nodes.push(linebreak.glue(0, 12, 0));
 					nodes.push(linebreak.penalty(0, 0, 0));
 					nodes.push(linebreak.glue(spaceWidth, -24, 0));
 					nodes.push(linebreak.box(0, ''));
-					nodes.push(linebreak.penalty(0, linebreak.defaults.infinity, 0));
+					nodes.push(linebreak.penalty(0, linebreak.infinity, 0));
 					nodes.push(linebreak.glue(0, 12, 0));
 				}
 			});
@@ -53,8 +59,8 @@ var formatter = function (measureText, options) {
 				nodes.push(linebreak.box(measureText(word), word));
 
 				if (index === array.length - 1) {
-					nodes.push(linebreak.glue(0, linebreak.defaults.infinity, 0));
-					nodes.push(linebreak.penalty(0, -linebreak.defaults.infinity, 1)); 
+					nodes.push(linebreak.glue(0, linebreak.infinity, 0));
+					nodes.push(linebreak.penalty(0, -linebreak.infinity, 1)); 
 				} else {
 					nodes.push(linebreak.glue(spaceWidth, spaceStretch, spaceShrink));
 				}
@@ -71,8 +77,8 @@ var formatter = function (measureText, options) {
 				nodes.push(linebreak.box(measureText(word), word));
 
 				if (index === array.length - 1) {
-					nodes.push(linebreak.glue(0, linebreak.defaults.infinity, 0));
-					nodes.push(linebreak.penalty(0, -linebreak.defaults.infinity, 1)); 
+					nodes.push(linebreak.glue(0, linebreak.infinity, 0));
+					nodes.push(linebreak.penalty(0, -linebreak.infinity, 1)); 
 				} else {
 					nodes.push(linebreak.glue(0, 12, 0));
 					nodes.push(linebreak.penalty(0, 0, 0));
@@ -84,12 +90,10 @@ var formatter = function (measureText, options) {
 	};
 };
 
-Object.extend(formatter, {
-	defaults: {
-		space: {
-			width: 3,
-			stretch: 6,
-			shrink: 9
-		}
-	}
-});
+formatter.defaults = {
+    space: {
+        width: 3,
+        stretch: 6,
+        shrink: 9
+    }
+};

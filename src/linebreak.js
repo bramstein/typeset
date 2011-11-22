@@ -11,7 +11,14 @@
  * All rights reserved.
  */
 var linebreak = function (nodes, lines, settings) {
-	var options = Object.extend({}, linebreak.defaults, settings),
+	var options = {
+            demerits: {
+                line: settings && settings.demerits && settings.demerits.line || 10,
+                flagged: settings && settings.demerits && settings.demerits.flagged || 100,
+                fitness: settings && settings.demerits && settings.demerits.fitness || 3000
+            },
+            tolerance: settings && settings.tolerance || 2
+        },
 		activeNodes = new LinkedList(),
 		sum = {
 			width: 0,
@@ -61,7 +68,7 @@ var linebreak = function (nodes, lines, settings) {
 			if (stretch > 0) {
 				return (lineLength - width) / stretch;
 			} else {
-				return options.infinity;
+				return linebreak.infinity;
 			}
 
 		} else if (width > lineLength) {
@@ -71,7 +78,7 @@ var linebreak = function (nodes, lines, settings) {
 			if (shrink > 0) {
 				return (lineLength - width) / shrink;
 			} else {
-				return options.infinity;
+				return linebreak.infinity;
 			}
 		} else {
 			// perfect match
@@ -95,7 +102,7 @@ var linebreak = function (nodes, lines, settings) {
 				result.width += nodes[i].width;
 				result.stretch += nodes[i].stretch;
 				result.shrink += nodes[i].shrink;
-			} else if (nodes[i].type === 'box' || (nodes[i].type === 'penalty' && nodes[i].penalty === -options.infinity && i > breakPointIndex)) {
+			} else if (nodes[i].type === 'box' || (nodes[i].type === 'penalty' && nodes[i].penalty === -linebreak.infinity && i > breakPointIndex)) {
 				break;
 			}
 		}
@@ -137,7 +144,7 @@ var linebreak = function (nodes, lines, settings) {
 				// ratio becomes negative) or when the current node is a forced break (i.e. the end
 				// of the paragraph when we want to remove all active nodes, but possibly have a final
 				// candidate active node---if the paragraph can be set using the given tolerance value.)
-				if (ratio < -1 || (node.type === 'penalty' && node.penalty === -options.infinity)) {
+				if (ratio < -1 || (node.type === 'penalty' && node.penalty === -linebreak.infinity)) {
 					activeNodes.remove(active);
 				}
 
@@ -150,7 +157,7 @@ var linebreak = function (nodes, lines, settings) {
 					if (node.type === 'penalty' && node.penalty >= 0) {
 						demerits = Math.pow(options.demerits.line + badness + node.penalty, 2);
 					// Negative penalty but not a forced break
-					} else if (node.type === 'penalty' && node.penalty !== -options.infinity) {
+					} else if (node.type === 'penalty' && node.penalty !== -linebreak.infinity) {
 						demerits = Math.pow(options.demerits.line + badness - node.penalty, 2);
 					// All other cases
 					} else {
@@ -231,7 +238,7 @@ var linebreak = function (nodes, lines, settings) {
 			sum.width += node.width;
 			sum.stretch += node.stretch;
 			sum.shrink += node.shrink;
-		} else if (node.type === 'penalty' && node.penalty !== options.infinity) {
+		} else if (node.type === 'penalty' && node.penalty !== linebreak.infinity) {
 			mainLoop(node, index, nodes);
 		}
 	});
@@ -254,38 +261,30 @@ var linebreak = function (nodes, lines, settings) {
 	return [];
 };
 
-Object.extend(linebreak, {
-	defaults: {
-		demerits: {
-			line: 10,
-			flagged: 100,
-			fitness: 3000
-		},
-		infinity: 10000,
-		tolerance: 2
-	},
-	glue: function (width, stretch, shrink) {
-		return {
-			type: 'glue',
-			width: width,
-			stretch: stretch,
-			shrink: shrink
-		};
-	},
-	box: function (width, value) {
-		return {
-			type: 'box',
-			width: width,
-			value: value
-		};
-	},
-	penalty: function (width, penalty, flagged) {
-		return {
-			type: 'penalty',
-			width: width,
-			penalty: penalty,
-			flagged: flagged
-		};
-	}
-});
+linebreak.infinity = 10000;
 
+linebreak.glue = function (width, stretch, shrink) {
+    return {
+        type: 'glue',
+        width: width,
+        stretch: stretch,
+        shrink: shrink
+    };
+};
+
+linebreak.box = function (width, value) {
+    return {
+        type: 'box',
+        width: width,
+        value: value
+    };
+};
+
+linebreak.penalty = function (width, penalty, flagged) {
+    return {
+        type: 'penalty',
+        width: width,
+        penalty: penalty,
+        flagged: flagged
+    };
+};
