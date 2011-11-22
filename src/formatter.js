@@ -1,7 +1,4 @@
 /*global linebreak*/
-/*requires ../core/object.js*/
-/*requires ../core/array.js*/
-/*requires linebreak.js*/
 
 /*!
  * Knuth and Plass line breaking algorithm in JavaScript

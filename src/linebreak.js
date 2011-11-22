@@ -1,7 +1,4 @@
 /*global LinkedList*/
-/*requires ../core/object.js*/
-/*requires ../core/array.js*/
-/*requires ../core/linked-list.js*/
 
 /**
  * @preserve Knuth and Plass line breaking algorithm in JavaScript
