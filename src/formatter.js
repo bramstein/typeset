@@ -15,7 +15,10 @@ var formatter = function (measureText, options) {
                 stretch: options && options.space.stretch || 6,
                 shrink: options && options.space.shrink || 9
             }
-        };
+        },
+        h = new Hypher(Hypher.en),
+        hyphenWidth = measureText('-'),
+        hyphenPenalty = 100;
 
 	return {
 		center: function (text) {
@@ -30,19 +33,29 @@ var formatter = function (measureText, options) {
 			nodes.push(linebreak.glue(0, 12, 0));
 
 			words.forEach(function (word, index, array) {
-				nodes.push(linebreak.box(measureText(word), word));
-
-				if (index === array.length - 1) {
-					nodes.push(linebreak.glue(0, 12, 0));
-					nodes.push(linebreak.penalty(0, -linebreak.infinity, 0));
-				} else {
-					nodes.push(linebreak.glue(0, 12, 0));
-					nodes.push(linebreak.penalty(0, 0, 0));
-					nodes.push(linebreak.glue(spaceWidth, -24, 0));
-					nodes.push(linebreak.box(0, ''));
-					nodes.push(linebreak.penalty(0, linebreak.infinity, 0));
-					nodes.push(linebreak.glue(0, 12, 0));
-				}
+                var hyphenated = h.hyphenate(word);
+                if (hyphenated.length > 1 && word.length > 4) {
+                    hyphenated.forEach(function (part, partIndex, partArray) {
+                        nodes.push(linebreak.box(measureText(part), part));
+                        if (partIndex !== partArray.length - 1) {
+                            nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+                        }
+                    });
+                } else {
+                    nodes.push(linebreak.box(measureText(word), word));
+                }
+                
+                if (index === array.length - 1) {
+                    nodes.push(linebreak.glue(0, 12, 0));
+                    nodes.push(linebreak.penalty(0, -linebreak.infinity, 0));
+                } else {
+                    nodes.push(linebreak.glue(0, 12, 0));
+                    nodes.push(linebreak.penalty(0, 0, 0));
+                    nodes.push(linebreak.glue(spaceWidth, -24, 0));
+                    nodes.push(linebreak.box(0, ''));
+                    nodes.push(linebreak.penalty(0, linebreak.infinity, 0));
+                    nodes.push(linebreak.glue(0, 12, 0));
+                }
 			});
 			return nodes;
 		},
@@ -53,14 +66,23 @@ var formatter = function (measureText, options) {
 				spaceShrink = (spaceWidth * o.space.width) / o.space.shrink;
 
 			words.forEach(function (word, index, array) {
-				nodes.push(linebreak.box(measureText(word), word));
-
-				if (index === array.length - 1) {
-					nodes.push(linebreak.glue(0, linebreak.infinity, 0));
-					nodes.push(linebreak.penalty(0, -linebreak.infinity, 1)); 
-				} else {
-					nodes.push(linebreak.glue(spaceWidth, spaceStretch, spaceShrink));
-				}
+                var hyphenated = h.hyphenate(word);
+                if (hyphenated.length > 1 && word.length > 4) {
+                    hyphenated.forEach(function (part, partIndex, partArray) {
+                        nodes.push(linebreak.box(measureText(part), part));
+                        if (partIndex !== partArray.length - 1) {
+                            nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+                        }
+                    });
+                } else {
+                    nodes.push(linebreak.box(measureText(word), word));
+                }
+                if (index === array.length - 1) {
+                    nodes.push(linebreak.glue(0, linebreak.infinity, 0));
+                    nodes.push(linebreak.penalty(0, -linebreak.infinity, 1)); 
+                } else {
+                    nodes.push(linebreak.glue(spaceWidth, spaceStretch, spaceShrink));
+                }
 			});
 			return nodes;
 		},
@@ -71,8 +93,18 @@ var formatter = function (measureText, options) {
 				spaceShrink = (spaceWidth * o.space.width) / o.space.shrink;
 
 			words.forEach(function (word, index, array) {
-				nodes.push(linebreak.box(measureText(word), word));
-
+                var hyphenated = h.hyphenate(word);
+                if (hyphenated.length > 1 && word.length > 4) {
+                    hyphenated.forEach(function (part, partIndex, partArray) {
+                        nodes.push(linebreak.box(measureText(part), part));
+                        if (partIndex !== partArray.length - 1) {
+                            nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+                        }
+                    });
+                } else {
+                    nodes.push(linebreak.box(measureText(word), word));
+                }
+                
 				if (index === array.length - 1) {
 					nodes.push(linebreak.glue(0, linebreak.infinity, 0));
 					nodes.push(linebreak.penalty(0, -linebreak.infinity, 1)); 
