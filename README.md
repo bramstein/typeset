@@ -20,7 +20,7 @@ The ratios are then calculated by measuring the difference between the width of 
 
 ### Assisted browser line breaks
 
-The line breaking algorithm can also be used to correct the line breaks made by the browser. The easiest way to do is to split a text up into lines and adjust the CSS `word-spacing` property. Unfortunately, Webkit based browsers do not support sub-pixel word-spacing. Alternatively, we can absolute position each word or split the line into segmants with integer word spacing. You can see the latter approach in action on the [examples/flatland/](Flatland line breaking example.)
+The line breaking algorithm can also be used to correct the line breaks made by the browser. The easiest way to do is to split a text up into lines and adjust the CSS `word-spacing` property. Unfortunately, Webkit based browsers do not support sub-pixel word-spacing. Alternatively, we can absolute position each word or split the line into segmants with integer word spacing. You can see the latter approach in action on the [Flatland line breaking example.](examples/flatland/)
 
 ### Examples
 
