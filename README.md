@@ -4,7 +4,7 @@ This is an implementation of the [Knuth and Plass line breaking algorithm](http:
 
 The paragraph below is set using a JavaScript implementation of the classic Knuth and Plass algorithm as used in TeX. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of 1/3 em, with a stretchability and shrink-ability of 1/6 em and 1/9 em respectively.
 
-![](typeset-with-ratio.png)
+![](../../raw/master/typeset-with-ratio.png)
 
 The following paragraph is set by a browser using `text-align: justify`. Notice the lines in the paragraph have, on average, greater inter-word spacing than the Knuth and Plass version, which is successful at minimizing the inter-word spacing over all lines.
 
