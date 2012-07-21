@@ -4,11 +4,11 @@ This is an implementation of the [Knuth and Plass line breaking algorithm](http:
 
 The paragraph below is set using a JavaScript implementation of the classic Knuth and Plass algorithm as used in TeX. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of 1/3 em, with a stretchability and shrink-ability of 1/6 em and 1/9 em respectively.
 
-![](typeset-with-ratio.png)
+![](https://github.com/bramstein/typeset/raw/master/typeset-with-ratio.png)
 
 The following paragraph is set by a browser using `text-align: justify`. Notice the lines in the paragraph have, on average, greater inter-word spacing than the Knuth and Plass version, which is successful at minimizing the inter-word spacing over all lines.
 
-![](typeset-browser.png)
+![](https://github.com/bramstein/typeset/raw/master/typeset-browser.png)
 
 The browser also ends up with ten lines instead of the nine lines found by the Knuth and Plass line breaking algorithm. This comparison might not be completely fair since we don't know the default inter-word space used by the browser (nor its stretching and shrinking parameters.) Experimental results however indicate the values used in most browsers are either identical or very similar. The next section explains how the ratio values for the browser were calculated.
 
@@ -30,25 +30,25 @@ The line breaking algorithm is not only capable of justifying text, it can perfo
 
 The following example is set ragged right. Ragged right is not simply justified text with fixed width inter-word spacing. Instead the algorithm tries to minimize the amount of white space at the end of each sentence over the whole paragraph. It also attempts to reduce the number of words that are "sticking out" of the margin.
 
-![](typeset-right.png)
+![](https://github.com/bramstein/typeset/raw/master/typeset-right.png)
 
 Ragged left text can be achieved by using a ragged right text and aligning its line endings with the left border. The example below is set centered. Again this is not simply a centering of justified text, but instead an attempt at minimizing the line lengths over the whole paragraph.
 
-![](typeset-centered.png)
+![](https://github.com/bramstein/typeset/raw/master/typeset-centered.png)
 
 #### Variable line width
 
 By varying the line width for a paragraph it is possible to flow the text around illustrations, asides, quotes and such. The example below leaves a gap for an illustration by setting the line widths temporarily shorter and then reverting. You can also see that the algorithm chose to hyphenate certain words to achieve acceptable line breaking.
 
-![](typeset-flow.png)
+![](https://github.com/bramstein/typeset/raw/master/typeset-flow.png)
 
 It is also possible to make some non-rectangular shapes, as shown in the examples below. In the first example, the text is laid out using an increasing line width and center aligning each line. This creates a triangular shape.
 
-![](typeset-triangle.png)
+![](https://github.com/bramstein/typeset/raw/master/typeset-triangle.png)
 
 Using some basic math it is also possible to set text in circles or even arbitrary polygons. Below is an example of text set inside a circle.
 
-![](typeset-circle.png)
+![](https://github.com/bramstein/typeset/raw/master/typeset-circle.png)
 
 ### To-do
 
