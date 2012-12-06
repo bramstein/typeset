@@ -133,7 +133,7 @@
 
 					for (var j = lineStart; j < nodes.length; j += 1) {
 						// After a line break, we skip any nodes unless they are boxes or forced breaks.
-						if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.infinity)) {
+						if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -Typeset.linebreak.infinity)) {
 							lineStart = j;
 							break;
 						}
@@ -180,7 +180,7 @@
 
 						nodes = format[type](text);
 
-						breaks = linebreak(nodes, lineLengths, {tolerance: tolerance});
+						breaks = Typeset.linebreak(nodes, lineLengths, {tolerance: tolerance});
 
 						if (breaks.length !== 0) {
 							draw(context, nodes, breaks, lineLengths, center);
