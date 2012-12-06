@@ -19,7 +19,7 @@
 			.example ul {
 				display: inline-block;
 				list-style-type: none;
-				padding: 0 0 0 1.5em;				
+				padding: 0 0 0 1.5em;
 				margin: 0 auto 0 0;
 				text-align: right;
 			}
@@ -61,7 +61,7 @@
 		<h3>Ragged right and centered alignment</h3>
 		<p>The following example is set ragged right. Ragged right is not simply justified text with fixed width inter-word spacing. Instead the algorithm tries to minimize the amount of white space at the end of each sentence over the whole paragraph. It also attempts to reduce the number of words that are "sticking out" of the margin. It is very noticeable here that hyphenation could improve the ragged right setting greatly by, for example, hyphenating the word "lime-tree".</p>
 		<canvas id="left" width="350" height="210"></canvas>
-		<p>Ragged left text can be achieved by using a ragged right text and aligning its line endings with the left border. The example below is set centered. Again this is not simply a centering of justified text, but instead an attempt at minimizing the line lengths over the whole paragraph.</p> 
+		<p>Ragged left text can be achieved by using a ragged right text and aligning its line endings with the left border. The example below is set centered. Again this is not simply a centering of justified text, but instead an attempt at minimizing the line lengths over the whole paragraph.</p>
 		<canvas id="center" width="350" height="210"></canvas>
 		<h3>Variable line width</h3>
 		<p>By varying the line width for a paragraph it is possible to flow the text around illustrations, asides, quotes and such. The example below leaves a gap for an illustration by setting the line widths temporarily shorter and then reverting.</p>
@@ -73,7 +73,7 @@
 		<h2>To-do</h2>
 		<p>The following are some extensions to the algorithm discussed in the original paper, which I intend to implement (at some point.)</p>
 		<ul>
-			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. The following quote from the original paper explains how to implement it using the box, glue and penalty model: 
+			<li><a href="http://en.wikipedia.org/wiki/Hanging_punctuation">Hanging punctuation</a>. The following quote from the original paper explains how to implement it using the box, glue and penalty model:
 
 				<blockquote>Some people prefer to have the right edge of their text look ‘solid’, by setting periods,
 				commas, and other punctuation marks (including inserted hyphens) in the right-hand
@@ -103,7 +103,7 @@
 			<li><a href="http://defoe.sourceforge.net/folio/knuth-plass.html">Knuth &amp; Plass line-breaking Revisited</a></li>
 			<li><a href="http://en.wikipedia.org/w/index.php?title=Word_wrap">Wikipedia: Word wrap</a></li>
 		</ul>
-		
+
         <h2>Translations</h2>
         <ul>
             <li><a href="http://webhostingrating.com/libs/typeset-be">Belorussian translation</a></li>
@@ -123,7 +123,7 @@
 			var text = "In olden times when wishing still helped one, there lived a king whose daughters were all beautiful; and the youngest was so beautiful that the sun itself, which has seen so much, was astonished whenever it shone in her face. Close by the king's castle lay a great dark forest, and under an old lime-tree in the forest was a well, and when the day was very warm, the king's child went out to the forest and sat down by the fountain; and when she was bored she took a golden ball, and threw it up on high and caught it; and this ball was her favorite plaything."
 
 			function draw(context, nodes, breaks, lineLengths, center) {
-				var i = 0, lines = [], point, j, r, lineStart = 0, y = 4, tmp, maxLength = Math.max.apply(null, lineLengths);
+				var i = 0, lines = [], point, j, r, lineStart = 0, y = 4, maxLength = Math.max.apply(null, lineLengths);
 
 				// Iterate through the line breaks, and split the nodes at the
 				// correct point.
@@ -133,7 +133,7 @@
 
 					for (var j = lineStart; j < nodes.length; j += 1) {
 						// After a line break, we skip any nodes unless they are boxes or forced breaks.
-						if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.infinity)) {
+						if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -Typeset.linebreak.infinity)) {
 							lineStart = j;
 							break;
 						}
@@ -147,7 +147,6 @@
 
 					if (center) {
 						x += (maxLength - lineLength) / 2;
-						
 					}
 
 					line.nodes.forEach(function (node, index, array) {
@@ -161,26 +160,27 @@
                         }
 					});
 
+                    // move lower to draw the next line
 					y += 21;
 				});
-            }
+            };
 
 			jQuery(function ($) {
 				function align(identifier, type, lineLengths, tolerance, center) {
 					var canvas = $(identifier).get(0),
-						context = canvas.getContext && canvas.getContext('2d'),
-						format, nodes, breaks;
+                    context = canvas.getContext && canvas.getContext('2d'),
+                    format, nodes, breaks;
 					if (context) {
 						context.textBaseline = 'top';
 						context.font = "14px 'times new roman', 'FreeSerif', serif";
 
-						format = formatter(function (str) {
+						format = Typeset.formatter(function (str) {
 							return context.measureText(str).width;
 						});
 
 						nodes = format[type](text);
 
-						breaks = linebreak(nodes, lineLengths, {tolerance: tolerance});
+						breaks = Typeset.linebreak(nodes, lineLengths, {tolerance: tolerance});
 
 						if (breaks.length !== 0) {
 							draw(context, nodes, breaks, lineLengths, center);
@@ -190,33 +190,32 @@
 					}
 					return [];
 				}
-                
-        var r = [],
-            radius = 147;
-                            
-        for (var j = 0; j < radius * 2; j += 21) {
-            r.push(Math.round(Math.sqrt((radius - j / 2) * (8 * j))));
-        }
 
-        r = r.filter(function (v) {
-            return v > 30;
-        });
+                var r = [],
+                    radius = 147;
 
-				align('#center', 'center', [350], 3);
-				align('#left', 'left', [350], 4);
-				align('#flow', 'justify', [350, 350, 350, 200, 200, 200, 200, 200, 200, 200, 350, 350], 3);
-				align('#triangle', 'justify',  [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550], 3, true);
-        align('#circle', 'justify', r, 3, true);
+                for (var j = 0; j < radius * 2; j += 21) {
+                    r.push(Math.round(Math.sqrt((radius - j / 2) * (8 * j))));
+                }
+
+                r = r.filter(function (v) {
+                    return v > 30;
+                });
+
+				align('#center',   'center',  [350], 3);
+				align('#left',     'left',    [350], 4);
+				align('#flow',     'justify', [350, 350, 350, 200, 200, 200, 200, 200, 200, 200, 350, 350], 3);
+				align('#triangle', 'justify', [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550], 3, true);
+                align('#circle',   'justify', r, 3, true);
 			});
 		</script>
 
 		<!-- Google Analytics -->
-		<script type="text/javascript">			
+		<script type="text/javascript">
 			var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 			document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-			
 		</script>
-		<script type="text/javascript">			
+		<script type="text/javascript">
 			try {
 				var pageTracker = _gat._getTracker("UA-10076742-1");
 				pageTracker._trackPageview();
