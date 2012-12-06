@@ -71,11 +71,13 @@
                     h = new Hypher(Hypher.en),
 					cache = {};
 
+				var linebreak = Typeset.linebreak;
+
 				function measureString(str) {
 					if (!cache[str]) {
 						ruler[0].firstChild.nodeValue = str;
 						cache[str] = ruler[0].offsetWidth;
-					} 
+					}
 					return cache[str];
 				}
 
@@ -145,10 +147,10 @@
 								} else {
 									nodes.push(linebreak.box(measureString(word), word));
 								}
-	
+
 								if (index === array.length - 1) {
 									nodes.push(linebreak.glue(0, linebreak.infinity, 0));
-									nodes.push(linebreak.penalty(0, -linebreak.infinity, 1)); 
+									nodes.push(linebreak.penalty(0, -linebreak.infinity, 1));
 								} else {
 									nodes.push(linebreak.glue(space.width, space.stretch, space.shrink));
 								}
@@ -201,7 +203,7 @@
 										} else {
 											tmp.push(n.value);
 										}
-									// empty boxes (indentation for example) 
+									// empty boxes (indentation for example)
 									} else if (n.type === 'box' && n.value === '') {
 										output.push('<span style="margin-left: 30px;"></span>');
 									// glue inside a line
@@ -258,6 +260,6 @@
 				});
 			});
 		</script>
-		
+
 	</body>
 </html>

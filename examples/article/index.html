@@ -174,7 +174,7 @@
 						context.textBaseline = 'top';
 						context.font = "14px 'times new roman', 'FreeSerif', serif";
 
-						format = formatter(function (str) {
+						format = Typeset.formatter(function (str) {
 							return context.measureText(str).width;
 						});
 

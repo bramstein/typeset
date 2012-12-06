@@ -7,7 +7,7 @@
  * Copyright 2009-2010, Bram Stein
  * All rights reserved.
  */
-var formatter = function (measureText, options) {
+Typeset.formatter = function (measureText, options) {
 	var linebreak = Typeset.linebreak;
 
     var spaceWidth = measureText(' '),
@@ -121,7 +121,7 @@ var formatter = function (measureText, options) {
     };
 };
 
-formatter.defaults = {
+Typeset.formatter.defaults = {
     space: {
         width: 3,
         stretch: 6,

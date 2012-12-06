@@ -11,7 +11,7 @@ jQuery(function ($) {
 
 	$('body').append(ruler);
 
-	format = formatter(function (str) {
+	format = Typeset.formatter(function (str) {
 		if (str !== ' ') {
 			return ruler.text(str).width();
 		} else {
