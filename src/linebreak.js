@@ -1,4 +1,4 @@
-/*global LinkedList*/
+/*global Typeset.LinkedList*/
 
 /**
  * @preserve Knuth and Plass line breaking algorithm in JavaScript
@@ -9,26 +9,26 @@
  */
 var linebreak = function (nodes, lines, settings) {
 	var options = {
-            demerits: {
-                line: settings && settings.demerits && settings.demerits.line || 10,
-                flagged: settings && settings.demerits && settings.demerits.flagged || 100,
-                fitness: settings && settings.demerits && settings.demerits.fitness || 3000
-            },
-            tolerance: settings && settings.tolerance || 2
-        },
-		activeNodes = new LinkedList(),
-		sum = {
-			width: 0,
-			stretch: 0,
-			shrink: 0
+		demerits: {
+			line: settings && settings.demerits && settings.demerits.line || 10,
+			flagged: settings && settings.demerits && settings.demerits.flagged || 100,
+			fitness: settings && settings.demerits && settings.demerits.fitness || 3000
 		},
-		lineLengths = lines,
-		breaks = [],
-		tmp = {
-			data: {
-				demerits: Infinity
-			}
-		};
+		tolerance: settings && settings.tolerance || 2
+	},
+	activeNodes = new Typeset.LinkedList(),
+	sum = {
+		width: 0,
+		stretch: 0,
+		shrink: 0
+	},
+	lineLengths = lines,
+	breaks = [],
+	tmp = {
+		data: {
+			demerits: Infinity
+		}
+	};
 
 	function breakpoint(position, demerits, ratio, line, fitnessClass, totals, previous) {
 		return {
@@ -48,11 +48,11 @@ var linebreak = function (nodes, lines, settings) {
 
 	function computeCost(start, end, active, currentLine) {
 		var width = sum.width - active.totals.width,
-			stretch = 0,
-			shrink = 0,
-			// If the current line index is within the list of linelengths, use it, otherwise use
-			// the last line length of the list.
-			lineLength = currentLine < lineLengths.length ? lineLengths[currentLine - 1] : lineLengths[lineLengths.length - 1];
+		stretch = 0,
+		shrink = 0,
+		// If the current line index is within the list of linelengths, use it, otherwise use
+		// the last line length of the list.
+		lineLength = currentLine < lineLengths.length ? lineLengths[currentLine - 1] : lineLengths[lineLengths.length - 1];
 
 		if (nodes[end].type === 'penalty') {
 			width += nodes[end].width;
@@ -84,7 +84,7 @@ var linebreak = function (nodes, lines, settings) {
 	}
 
 
-	// Add width, stretch and shrink values from the current 
+	// Add width, stretch and shrink values from the current
 	// break point up to the next box or forced penalty.
 	function computeSum(breakPointIndex) {
 		var result = {
@@ -127,9 +127,17 @@ var linebreak = function (nodes, lines, settings) {
 		// sorted by line number.
 		while (active !== null) {
 
-			candidates = [{demerits: Infinity}, {demerits: Infinity}, {demerits: Infinity}, {demerits: Infinity}];
+			candidates = [{
+				demerits: Infinity
+			}, {
+				demerits: Infinity
+			}, {
+				demerits: Infinity
+			}, {
+				demerits: Infinity
+			}];
 
-			// Iterate through the linked list of active nodes to find new potential active nodes 
+			// Iterate through the linked list of active nodes to find new potential active nodes
 			// and deactivate current active nodes.
 			while (active !== null) {
 				next = active.next;
@@ -145,7 +153,7 @@ var linebreak = function (nodes, lines, settings) {
 					activeNodes.remove(active);
 				}
 
-				// If the ratio is within the valid range of -1 <= ratio <= tolerance calculate the 
+				// If the ratio is within the valid range of -1 <= ratio <= tolerance calculate the
 				// total demerits and record a candidate active node.
 				if (-1 <= ratio && ratio <= options.tolerance) {
 					badness = 100 * Math.pow(Math.abs(ratio), 3);
@@ -187,7 +195,11 @@ var linebreak = function (nodes, lines, settings) {
 
 					// Only store the best candidate for each fitness class
 					if (demerits < candidates[currentClass].demerits) {
-						candidates[currentClass] = {active: active, demerits: demerits, ratio: ratio};
+						candidates[currentClass] = {
+							active: active,
+							demerits: demerits,
+							ratio: ratio
+						};
 					}
 				}
 
@@ -208,10 +220,10 @@ var linebreak = function (nodes, lines, settings) {
 
 			for (fitnessClass = 0; fitnessClass < candidates.length; fitnessClass += 1) {
 				candidate = candidates[fitnessClass];
-				
+
 				if (candidate.demerits < Infinity) {
-					newNode = new LinkedList.Node(breakpoint(index, candidate.demerits, candidate.ratio, 
-													candidate.active.data.line + 1, fitnessClass, tmpSum, candidate.active));
+					newNode = new Typeset.LinkedList.Node(breakpoint(index, candidate.demerits, candidate.ratio,
+						candidate.active.data.line + 1, fitnessClass, tmpSum, candidate.active));
 					if (active !== null) {
 						activeNodes.insertBefore(active, newNode);
 					} else {
@@ -223,7 +235,7 @@ var linebreak = function (nodes, lines, settings) {
 	}
 
 	// Add an active node for the start of the paragraph.
-	activeNodes.push(new LinkedList.Node(breakpoint(0, 0, 0, 0, 0, undefined, null)));
+	activeNodes.push(new Typeset.LinkedList.Node(breakpoint(0, 0, 0, 0, 0, undefined, null)));
 
 	nodes.forEach(function (node, index, nodes) {
 		if (node.type === 'box') {
@@ -250,7 +262,10 @@ var linebreak = function (nodes, lines, settings) {
 		});
 
 		while (tmp !== null) {
-			breaks.push({position: tmp.data.position, ratio: tmp.data.ratio});
+			breaks.push({
+				position: tmp.data.position,
+				ratio: tmp.data.ratio
+			});
 			tmp = tmp.data.previous;
 		}
 		return breaks.reverse();
@@ -261,27 +276,27 @@ var linebreak = function (nodes, lines, settings) {
 linebreak.infinity = 10000;
 
 linebreak.glue = function (width, stretch, shrink) {
-    return {
-        type: 'glue',
-        width: width,
-        stretch: stretch,
-        shrink: shrink
-    };
+	return {
+		type: 'glue',
+		width: width,
+		stretch: stretch,
+		shrink: shrink
+	};
 };
 
 linebreak.box = function (width, value) {
-    return {
-        type: 'box',
-        width: width,
-        value: value
-    };
+	return {
+		type: 'box',
+		width: width,
+		value: value
+	};
 };
 
 linebreak.penalty = function (width, penalty, flagged) {
-    return {
-        type: 'penalty',
-        width: width,
-        penalty: penalty,
-        flagged: flagged
-    };
+	return {
+		type: 'penalty',
+		width: width,
+		penalty: penalty,
+		flagged: flagged
+	};
 };
