@@ -10,8 +10,8 @@ jQuery(function ($) {
 		format;
 
 	$('body').append(ruler);
-	
-	format = formatter(function (str) {
+
+	format = Typeset.formatter(function (str) {
 		if (str !== ' ') {
 			return ruler.text(str).width();
 		} else {
@@ -21,7 +21,7 @@ jQuery(function ($) {
 
 	function browserAssistTypeset(identifier, text, type, lineLengths, tolerance) {
 		var nodes = format[type](text),
-			breaks = linebreak(nodes, lineLengths, {tolerance: tolerance}),
+			breaks = Typeset.linebreak(nodes, lineLengths, {tolerance: tolerance}),
 			lines = [],
 			i, point, r, lineStart,
 			browserAssist = $(identifier).after('<ul></ul>'),
@@ -35,7 +35,7 @@ jQuery(function ($) {
 
 			for (var j = lineStart; j < nodes.length; j += 1) {
 				// After a line break, we skip any nodes unless they are boxes or forced breaks.
-				if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.defaults.infinity)) {
+				if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -Typeset.linebreak.defaults.infinity)) {
 					lineStart = j;
 					break;
 				}
