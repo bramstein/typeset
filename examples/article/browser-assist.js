@@ -35,7 +35,7 @@ jQuery(function ($) {
 
 			for (var j = lineStart; j < nodes.length; j += 1) {
 				// After a line break, we skip any nodes unless they are boxes or forced breaks.
-				if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -Typeset.linebreak.defaults.infinity)) {
+				if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -Typeset.linebreak.infinity)) {
 					lineStart = j;
 					break;
 				}
