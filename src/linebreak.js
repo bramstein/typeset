@@ -162,10 +162,10 @@ Typeset.linebreak = (function() {
 
 						// Positive penalty
 						if (node.type === 'penalty' && node.penalty >= 0) {
-							demerits = Math.pow(options.demerits.line + badness + node.penalty, 2);
+							demerits = Math.pow(options.demerits.line + badness, 2) + Math.pow(node.penalty, 2);
 						// Negative penalty but not a forced break
 						} else if (node.type === 'penalty' && node.penalty !== -linebreak.infinity) {
-							demerits = Math.pow(options.demerits.line + badness - node.penalty, 2);
+							demerits = Math.pow(options.demerits.line + badness, 2) - Math.pow(node.penalty, 2);
 						// All other cases
 						} else {
 							demerits = Math.pow(options.demerits.line + badness, 2);
