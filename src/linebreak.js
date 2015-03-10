@@ -146,7 +146,7 @@ Typeset.linebreak = (function() {
 					currentLine = active.data.line + 1;
 					ratio = computeCost(active.data.position, index, active.data, currentLine);
 
-					// Deactive nodes when the the distance between the current active node and the
+					// Deactive nodes when the distance between the current active node and the
 					// current node becomes too large (i.e. it exceeds the stretch limit and the stretch
 					// ratio becomes negative) or when the current node is a forced break (i.e. the end
 					// of the paragraph when we want to remove all active nodes, but possibly have a final
