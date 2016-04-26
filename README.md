@@ -80,7 +80,3 @@ These are the resources I found most useful while implementing the line breaking
 * [Breaking paragraphs into lines, Donald E. Knuth, Michael F. Plass](http://www3.interscience.wiley.com/journal/113445055/abstract)
 * [Knuth & Plass line-breaking Revisited](http://defoe.sourceforge.net/folio/knuth-plass.html)
 * [Wikipedia: Word wrap](http://en.wikipedia.org/w/index.php?title=Word_wrap)
-
-### Translations
-
-* [Belorussian translation](http://webhostingrating.com/libs/typeset-be)
