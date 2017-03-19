@@ -130,7 +130,7 @@ jQuery(function ($) {
 
         var ret = typeset(text, measure, type, lineLengths, tolerance);
 
-        if (ret[0].length !== 0) {
+        if (ret.length !== 0) {
             draw(context, ret, measure, center);
         } else {
             context.fillText('Paragraph can not be set with the given tolerance.', 0, 0);
