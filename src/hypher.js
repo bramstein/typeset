@@ -1,34 +1,43 @@
+
+// The en-US hyphenation patterns are retrieved from
+// http://tug_org/svn/texhyphen/trunk/collaboration/repository/hyphenator/
+//import patterns from './patterns.json';
+
 /**
  * @constructor
  * @param {!{patterns: !Object, leftmin: !number, rightmin: !number}} language The language pattern file. Compatible with Hyphenator.js.
  * @param {?Object=} options Options to alter Hypher's hyphenation behaviour.
  */
-function Hypher(language) {
+function Hypher(lang) {
+    if(!patterns.hasOwnProperty(lang)) {
+        throw "Hypher: Unsupported Language";
+    }
+    const language = patterns[lang];
 
     /**
      * @type {!Hypher.TrieNode}
      */
-    this.trie = this.createTrie(language['patterns']);
+    this.trie = this.createTrie(language.patterns);
 
     /**
      * @type {!number}
      * @const
      */
-    this.leftMin = language['leftmin'];
+    this.leftMin = language.leftmin;
 
     /**
      * @type {!number}
      * @const
      */
-    this.rightMin = language['rightmin'];
+    this.rightMin = language.rightmin;
 
     /**
      * @type {!Object.<string, !Array.<string>>}
      */
     this.exceptions = {};
 
-    if (language['exceptions']) {
-        language['exceptions'].split(/,\s?/g).forEach(function (exception) {
+    if (language.exceptions) {
+        language.exceptions.split(/,\s?/g).forEach(function (exception) {
             var hyphenationMarker = new RegExp(exception.indexOf('=') !== -1 ? '=' : '-', 'g');
             this.exceptions[exception.replace(hyphenationMarker, '')] = exception.split(hyphenationMarker);
         }, this);

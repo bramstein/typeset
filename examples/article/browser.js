@@ -80,3 +80,78 @@ jQuery(function ($) {
 	$('#browser').text(text);
 	browserTypeset();
 });
+
+function draw(context, lines, measure, center) {
+    var i = 0, point, j,
+        y = 4, maxLength = 0;
+
+    //if(center)
+        lines.forEach(function(line) {
+            maxLength = maxLength > line.width ? maxLength : line.width;
+        });
+    console.log(lines.length, maxLength);
+
+    lines.forEach(function (line) {
+        const spaceShrink = 12 / 9,
+              spaceStretch = 12 / 6,
+              r = line.ratio * (line.ratio < 0 ? spaceShrink : spaceStretch);
+        var x = 0;
+
+        if (center) {
+            x += (maxLength - line.width) / 2;
+        }
+
+        var words = line.value.split(' ');
+        words.forEach(function(w) {
+            context.fillText(w, x, y);
+            x += measure(w+' ') + r;
+        });
+
+        // move lower to draw the next line
+        y += 21;
+    });
+}
+
+jQuery(function ($) {
+    function align(identifier, type, lineLengths, tolerance, center) {
+        var canvas = $(identifier).get(0),
+            context = canvas.getContext && canvas.getContext('2d'),
+            format, nodes, breaks;
+        if (!context) {
+            canvas.text("Unable to render to Canvas.");
+            return;
+        }
+        context.textBaseline = 'top';
+        context.font = "14px 'times new roman', 'FreeSerif', serif";
+
+        function measure(str) {
+            return context.measureText(str).width;
+        };
+
+        var ret = typeset(text, measure, type, lineLengths, tolerance);
+
+        if (ret[0].length !== 0) {
+            draw(context, ret, measure, center);
+        } else {
+            context.fillText('Paragraph can not be set with the given tolerance.', 0, 0);
+        }
+    }
+
+    var r = [],
+        radius = 147;
+
+    for (var j = 0; j < radius * 2; j += 21) {
+        r.push(Math.round(Math.sqrt((radius - j / 2) * (8 * j))));
+    }
+
+    r = r.filter(function (v) {
+        return v > 30;
+    });
+
+    align('#center',   'center',  [350], 3);
+    align('#left',     'left',    [350], 4);
+    align('#flow',     'justify', [350, 350, 350, 200, 200, 200, 200, 200, 200, 200, 350, 350], 3);
+    align('#triangle', 'justify', [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550], 3, true);
+    align('#circle',   'justify', r, 3, true);
+});
+
