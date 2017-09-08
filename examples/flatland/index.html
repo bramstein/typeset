@@ -58,9 +58,11 @@
 			</div>
 		</div>
         <script type="text/javascript" src="../../src/linked-list.js"></script>
+		<script type="text/javascript" src="../../src/patterns.js"></script>
+		<script type="text/javascript" src="../../src/hypher.js"></script>
+		<script type="text/javascript" src="../../src/formatter.js"></script>
 		<script type="text/javascript" src="../../src/linebreak.js"></script>
-		<script type="text/javascript" src="../../lib/hypher.js"></script>
-		<script type="text/javascript" src="../../lib/en-us.js"></script>
+		<script type="text/javascript" src="../../src/typeset.js"></script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 		<script type="text/javascript">
 			jQuery(function ($) {
@@ -68,10 +70,8 @@
 					lineHeight = 0,
 					lineLengths = [],
 					tmp, ruler,
-                    h = new Hypher(Hypher.en),
+                    h = new Hypher("en-us"),
 					cache = {};
-
-				var linebreak = Typeset.linebreak;
 
 				function measureString(str) {
 					if (!cache[str]) {
@@ -126,7 +126,7 @@
 							paragraph = $(element);
 
 							if (index !== 0) {
-								nodes.push(linebreak.box(30, ''));
+								nodes.push(LineBreak.box(30, ''));
 							}
 
 							words = paragraph.text().split(/\s/);
@@ -139,32 +139,32 @@
 
 								if (hyphenated.length > 1) {
 									hyphenated.forEach(function (part, partIndex, partArray) {
-										nodes.push(linebreak.box(measureString(part), part));
+										nodes.push(LineBreak.box(measureString(part), part));
 										if (partIndex !== partArray.length - 1) {
-											nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+											nodes.push(LineBreak.penalty(hyphenWidth, hyphenPenalty, 1));
 										}
 									});
 								} else {
-									nodes.push(linebreak.box(measureString(word), word));
+									nodes.push(LineBreak.box(measureString(word), word));
 								}
 
 								if (index === array.length - 1) {
-									nodes.push(linebreak.glue(0, linebreak.infinity, 0));
-									nodes.push(linebreak.penalty(0, -linebreak.infinity, 1));
+									nodes.push(LineBreak.glue(0, LineBreak.infinity, 0));
+									nodes.push(LineBreak.penalty(0, -LineBreak.infinity, 1));
 								} else {
-									nodes.push(linebreak.glue(space.width, space.stretch, space.shrink));
+									nodes.push(LineBreak.glue(space.width, space.stretch, space.shrink));
 								}
 							});
 
 							// Perform the line breaking
-							breaks = linebreak(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 1});
+							breaks = BreakLines(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 1});
 
 							// Try again with a higher tolerance if the line breaking failed.
 							if (breaks.length === 0) {
-								breaks = linebreak(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 2});
+								breaks = BreakLines(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 2});
 								// And again
 								if (breaks.length === 0) {
-									breaks = linebreak(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 3});
+									breaks = BreakLines(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 3});
 								}
 							}
 
@@ -175,7 +175,7 @@
 
 								for (var j = lineStart; j < nodes.length; j += 1) {
 									// After a line break, we skip any nodes unless they are boxes or forced breaks.
-									if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.infinity)) {
+									if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -LineBreak.infinity)) {
 										lineStart = j;
 										break;
 									}

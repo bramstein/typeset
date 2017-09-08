@@ -21,6 +21,12 @@ body {
 	background-color: #F9F9F4;
 }
 
+.line {
+    vertical-align: top;
+    display: inline-block;
+    white-space: nowrap; }
+
+
 canvas {
 	margin-left: auto;
 	margin-right: auto;

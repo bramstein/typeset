@@ -1,4 +1,11 @@
-/*global Typeset.linebreak*/
+//import { Hypher } from './hypher'
+//import { LineBreak, BreakLines } from './linebreak'
+
+var defaults = {
+    width: 3,
+    stretch: 6,
+    shrink: 9
+};
 
 /*!
  * Knuth and Plass line breaking algorithm in JavaScript
@@ -7,18 +14,16 @@
  * Copyright 2009-2010, Bram Stein
  * All rights reserved.
  */
-Typeset.formatter = function (measureText, options) {
-	var linebreak = Typeset.linebreak;
-
+function formatter(measureText, options) {
     var spaceWidth = measureText(' '),
         o = {
             space: {
-                width: options && options.space.width || 3,
-                stretch: options && options.space.stretch || 6,
-                shrink: options && options.space.shrink || 9
+                width:   options && options.space.width   || defaults.width,
+                stretch: options && options.space.stretch || defaults.stretch,
+                shrink:  options && options.space.shrink  || defaults.shrink
             }
         },
-        h = new Hypher(Hypher.en),
+        h = new Hypher("en-us"),
         hyphenWidth = measureText('-'),
         hyphenPenalty = 100;
 
@@ -31,32 +36,32 @@ Typeset.formatter = function (measureText, options) {
 
             // Although not specified in the Knuth and Plass whitepaper, this box is necessary
             // to keep the glue from disappearing.
-            nodes.push(linebreak.box(0, ''));
-            nodes.push(linebreak.glue(0, 12, 0));
+            nodes.push(LineBreak.box(0, ''));
+            nodes.push(LineBreak.glue(0, 12, 0));
 
             words.forEach(function (word, index, array) {
                 var hyphenated = h.hyphenate(word);
                 if (hyphenated.length > 1 && word.length > 4) {
                     hyphenated.forEach(function (part, partIndex, partArray) {
-                        nodes.push(linebreak.box(measureText(part), part));
+                        nodes.push(LineBreak.box(measureText(part), part));
                         if (partIndex !== partArray.length - 1) {
-                            nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+                            nodes.push(LineBreak.penalty(hyphenWidth, hyphenPenalty, 1));
                         }
                     });
                 } else {
-                    nodes.push(linebreak.box(measureText(word), word));
+                    nodes.push(LineBreak.box(measureText(word), word));
                 }
 
                 if (index === array.length - 1) {
-                    nodes.push(linebreak.glue(0, 12, 0));
-                    nodes.push(linebreak.penalty(0, -linebreak.infinity, 0));
+                    nodes.push(LineBreak.glue(0, 12, 0));
+                    nodes.push(LineBreak.penalty(0, -LineBreak.infinity, 0));
                 } else {
-                    nodes.push(linebreak.glue(0, 12, 0));
-                    nodes.push(linebreak.penalty(0, 0, 0));
-                    nodes.push(linebreak.glue(spaceWidth, -24, 0));
-                    nodes.push(linebreak.box(0, ''));
-                    nodes.push(linebreak.penalty(0, linebreak.infinity, 0));
-                    nodes.push(linebreak.glue(0, 12, 0));
+                    nodes.push(LineBreak.glue(0, 12, 0));
+                    nodes.push(LineBreak.penalty(0, 0, 0));
+                    nodes.push(LineBreak.glue(spaceWidth, -24, 0));
+                    nodes.push(LineBreak.box(0, ''));
+                    nodes.push(LineBreak.penalty(0, LineBreak.infinity, 0));
+                    nodes.push(LineBreak.glue(0, 12, 0));
                 }
             });
             return nodes;
@@ -71,19 +76,19 @@ Typeset.formatter = function (measureText, options) {
                 var hyphenated = h.hyphenate(word);
                 if (hyphenated.length > 1 && word.length > 4) {
                     hyphenated.forEach(function (part, partIndex, partArray) {
-                        nodes.push(linebreak.box(measureText(part), part));
+                        nodes.push(LineBreak.box(measureText(part), part));
                         if (partIndex !== partArray.length - 1) {
-                            nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+                            nodes.push(LineBreak.penalty(hyphenWidth, hyphenPenalty, 1));
                         }
                     });
                 } else {
-                    nodes.push(linebreak.box(measureText(word), word));
+                    nodes.push(LineBreak.box(measureText(word), word));
                 }
                 if (index === array.length - 1) {
-                    nodes.push(linebreak.glue(0, linebreak.infinity, 0));
-                    nodes.push(linebreak.penalty(0, -linebreak.infinity, 1));
+                    nodes.push(LineBreak.glue(0, LineBreak.infinity, 0));
+                    nodes.push(LineBreak.penalty(0, -LineBreak.infinity, 1));
                 } else {
-                    nodes.push(linebreak.glue(spaceWidth, spaceStretch, spaceShrink));
+                    nodes.push(LineBreak.glue(spaceWidth, spaceStretch, spaceShrink));
                 }
             });
             return nodes;
@@ -98,33 +103,25 @@ Typeset.formatter = function (measureText, options) {
                 var hyphenated = h.hyphenate(word);
                 if (hyphenated.length > 1 && word.length > 4) {
                     hyphenated.forEach(function (part, partIndex, partArray) {
-                        nodes.push(linebreak.box(measureText(part), part));
+                        nodes.push(LineBreak.box(measureText(part), part));
                         if (partIndex !== partArray.length - 1) {
-                            nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+                            nodes.push(LineBreak.penalty(hyphenWidth, hyphenPenalty, 1));
                         }
                     });
                 } else {
-                    nodes.push(linebreak.box(measureText(word), word));
+                    nodes.push(LineBreak.box(measureText(word), word));
                 }
 
                 if (index === array.length - 1) {
-                    nodes.push(linebreak.glue(0, linebreak.infinity, 0));
-                    nodes.push(linebreak.penalty(0, -linebreak.infinity, 1));
+                    nodes.push(LineBreak.glue(0, LineBreak.infinity, 0));
+                    nodes.push(LineBreak.penalty(0, -LineBreak.infinity, 1));
                 } else {
-                    nodes.push(linebreak.glue(0, 12, 0));
-                    nodes.push(linebreak.penalty(0, 0, 0));
-                    nodes.push(linebreak.glue(spaceWidth, -12, 0));
+                    nodes.push(LineBreak.glue(0, 12, 0));
+                    nodes.push(LineBreak.penalty(0, 0, 0));
+                    nodes.push(LineBreak.glue(spaceWidth, -12, 0));
                 }
             });
             return nodes;
         }
     };
-};
-
-Typeset.formatter.defaults = {
-    space: {
-        width: 3,
-        stretch: 6,
-        shrink: 9
-    }
 };
