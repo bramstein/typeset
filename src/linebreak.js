@@ -77,7 +77,7 @@ Typeset.linebreak = (function() {
 				if (shrink > 0) {
 					return (lineLength - width) / shrink;
 				} else {
-					return linebreak.infinity;
+					return -linebreak.infinity;
 				}
 			} else {
 				// perfect match
