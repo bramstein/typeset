@@ -1,6 +1,6 @@
 ## TeX line breaking algorithm in JavaScript
 
-This is an implementation of the [Knuth and Plass line breaking algorithm](http://www3.interscience.wiley.com/journal/113445055/abstract) using JavaScript. The goal of this project is to optimally set justified text in the browser, and ultimately provide a library for various line breaking algorithms in JavaScript.
+This is an implementation of the [Knuth and Plass line breaking algorithm](https://web.archive.org/web/20110930221135/http://onlinelibrary.wiley.com/doi/10.1002/spe.4380111102/abstract) using JavaScript. The goal of this project is to optimally set justified text in the browser, and ultimately provide a library for various line breaking algorithms in JavaScript.
 
 The paragraph below is set using a JavaScript implementation of the classic Knuth and Plass algorithm as used in TeX. The numbers on the right of each line are the stretching or shrinking ratio compared to the optimal line width. This example uses a default space of 1/3 em, with a stretchability and shrink-ability of 1/6 em and 1/9 em respectively.
 
@@ -77,6 +77,6 @@ The following are some extensions to the algorithm discussed in the original pap
 These are the resources I found most useful while implementing the line breaking algorithm.
 
 * [Digital Typography, Donald E. Knuth](http://www.amazon.com/Digital-Typography-Center-Language-Information/dp/1575860104/)
-* [Breaking paragraphs into lines, Donald E. Knuth, Michael F. Plass](http://www3.interscience.wiley.com/journal/113445055/abstract)
+* [Breaking paragraphs into lines, Donald E. Knuth, Michael F. Plass](https://web.archive.org/web/20110930221135/http://onlinelibrary.wiley.com/doi/10.1002/spe.4380111102/abstract)
 * [Knuth & Plass line-breaking Revisited](http://defoe.sourceforge.net/folio/knuth-plass.html)
 * [Wikipedia: Word wrap](http://en.wikipedia.org/w/index.php?title=Word_wrap)
