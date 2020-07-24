@@ -77,6 +77,6 @@ The following are some extensions to the algorithm discussed in the original pap
 These are the resources I found most useful while implementing the line breaking algorithm.
 
 * [Digital Typography, Donald E. Knuth](http://www.amazon.com/Digital-Typography-Center-Language-Information/dp/1575860104/)
-* [Breaking paragraphs into lines, Donald E. Knuth, Michael F. Plass](https://web.archive.org/web/20110930221135/http://onlinelibrary.wiley.com/doi/10.1002/spe.4380111102/abstract)
+* [Breaking paragraphs into lines, Donald E. Knuth, Michael F. Plass](https://doi.org/10.1002/spe.4380111102)
 * [Knuth & Plass line-breaking Revisited](http://defoe.sourceforge.net/folio/knuth-plass.html)
 * [Wikipedia: Word wrap](http://en.wikipedia.org/w/index.php?title=Word_wrap)
