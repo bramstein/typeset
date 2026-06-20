@@ -164,8 +164,15 @@
 				function align(identifier, type, lineLengths, tolerance, center) {
 					var canvas = $(identifier).get(0),
                     context = canvas.getContext && canvas.getContext('2d'),
+                    devicePixelRatio = window.devicePixelRatio || 1,
                     format, nodes, breaks;
 					if (context) {
+						canvas.style.width = canvas.width + 'px';
+						canvas.style.height = canvas.height + 'px';
+						canvas.width *= devicePixelRatio;
+						canvas.height *= devicePixelRatio;
+						context.scale(devicePixelRatio, devicePixelRatio);
+
 						context.textBaseline = 'top';
 						context.font = "14px 'times new roman', 'FreeSerif', serif";
 
